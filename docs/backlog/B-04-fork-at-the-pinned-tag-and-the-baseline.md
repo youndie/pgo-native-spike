@@ -1,7 +1,7 @@
 ---
 id: B-04
 title: "Build the fork at v2.4.20, and prove it is a valid baseline"
-status: open
+status: wip
 priority: P0
 size: L
 stage: stage-0-stand
