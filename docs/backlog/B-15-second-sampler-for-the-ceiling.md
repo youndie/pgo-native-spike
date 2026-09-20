@@ -1,7 +1,7 @@
 ---
 id: B-15
 title: "Cross-check the ceiling with razves's sampler, as a second implementation"
-status: question
+status: done
 priority: P2
 size: M
 stage: stage-1-ceiling
@@ -109,3 +109,39 @@ decide:
 
 Option 3 is the one that recovers most of the item's value for least effort, and option 4 is
 nearly free; they are not exclusive. Option 2 is the one with value beyond this repository.
+
+## Decision — 2026-09-21, by the owner
+
+**Option 3: cross-check on the microbenchmark.** Not the razves note, not the upstream `EINTR`
+fix, and not dropping it. So the item is re-scoped rather than closed:
+
+- **What it now checks is the attribution grammar**, against an independent sampler and an
+  independent symbol reader, on `probes/dispatch-bench.kt` — which has no selector and therefore
+  no signal problem.
+- **What it no longer checks is RQ1's binary.** The subject's buckets stay measured by one
+  implementation. The results document says so, and that stays true.
+
+## Iteration 2 — 2026-09-21. Done, on the microbenchmark
+
+Both samplers on **one run** of `probes/dispatch-bench.kt` (razves in-process at 997 Hz, `perf`
+on the same process), so the workload is identical by construction. Full table in `logs/b-15/`.
+
+- **AC (BY ORIGIN beside the grammar, difference as a number) — met.** Kotlin self: perf
+  87.71 %, razves 93.2 %. The gap is the kernel, which an in-process sampler cannot see:
+  removing perf's 155 kernel samples from the denominator puts Kotlin self between **92.15 %**
+  and **93.33 %** depending on where its 36 unresolved samples belong, and **razves's 93.26 %
+  sits inside that band, 0.07 points from the edge**.
+- **AC (unnamed leaves and dropped samples printed) — met.** razves: **0 dropped, 99.7 % of
+  leaves named**. perf: 1.12 % unresolved.
+- **AC (the control: chase any disagreement to a named symbol) — met, and it found something.**
+  The disputed bucket is **one symbol, `Kotlin_String_equals`, 162 of 166 samples**. razves
+  decides `KOTLIN_RUNTIME` from C++ Itanium mangling (`Mangling.kt`: first nested namespace of a
+  `_ZN…` symbol in `{kotlin, konan}`), so the runtime's **C entry points** cannot reach that rule
+  and fall to `c`; `attribution.py` puts them in `runtime`. Neither is wrong — the boundary is a
+  choice, and only a second reader drawing it elsewhere makes that visible. The arithmetic closes
+  exactly: razves `c` 202 = perf libc 38 + 162 + 2 C++ leaves, **difference 0**.
+- **AC (rebuild otherwise identical, size delta stated) — met in iteration 1**: 22 160 bytes.
+
+**Scope, stated rather than glossed:** this checks the *grammar*, on the microbenchmark. **RQ1's
+own buckets remain measured by one implementation**, because razves cannot run against a Ktor CIO
+process at all. The results document says so.
