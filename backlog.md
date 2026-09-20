@@ -40,7 +40,7 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (11)
+## Open (12)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
@@ -55,6 +55,7 @@ an item proposing either does not belong in this file.
 | [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10 |
 | [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
+| [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 
 ## Closed (3)
 
