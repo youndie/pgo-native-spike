@@ -1,0 +1,18 @@
+=== addresses bench-b can reach ===
+lo 127.0.0.1/8
+eth0 100.64.226.129/32
+enp7s0 10.0.0.2/32
+docker0 172.17.0.1/16
+=== candidate binaries ===
+9281688 bench-twin
+15592099 bench-twin-new
+11317136 bench-xyk
+11511864 bench-xyk-new
+3615 xyk-chart.tgz
+11517616 xyk-fixed16
+11475544 xyk-pagedoff
+20426272 xyk-shipping
+11519840 xyk-std
+=== is xyk-pagedoff ingest-only (no curl) and static? ===
+xyk-pagedoff   curl syms: 0      static: 1
+xyk-shipping   curl syms: 18     static: 1
