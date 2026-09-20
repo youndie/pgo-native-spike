@@ -135,3 +135,17 @@ quoted later without its conditions.
 host any more, so whether perf resolves symbols for a containerised process from the host side is
 untested. It is a real question for [B-07](B-07-rq1-the-ceiling.md) and is named in its findings
 when that item runs, not assumed away here.
+
+**Correction, 2026-09-20, while starting [B-03](B-03-the-ruler.md): the paragraph above is wrong,
+and it is wrong in the direction that would have cost a day.** `xyk/bench/run.sh` is the older
+single-host harness and does use docker. The two-host protocol this study pins — the one that
+produced the numbers in research §1.4 and §1.7 — is `xyk/bench/columns.sh`, and it states in its
+own header that *"the subject runs both static binaries directly — no docker between the
+measurement and the thing measured"*. So the bare process profiled here **is** the real path, and
+the container question does not arise for B-07.
+
+How the error was made is worth more than the error: two harnesses live in the same directory, the
+grep that found `docker run` found the wrong one, and the header of the right one says the opposite
+in plain English three lines from the top. A path read out of a grep hit is not the same as the
+path the measurement takes ([research §1.4](../research/research-architecture.md) names
+`columns.sh` and this item did not read it).
