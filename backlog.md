@@ -44,7 +44,7 @@ an item proposing either does not belong in this file.
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
+| [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08, B-22 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
 | [B-20](docs/backlog/B-20-ceiling-on-the-paged-allocator.md) `[ ]` | Re-measure the ceiling on a paged-allocator build | P0 | S | - |
 | [B-22](docs/backlog/B-22-replay-the-linker-command.md) `[ ]` | Replay the linker command instead of resuming from bitcode | P0 | M | - |
