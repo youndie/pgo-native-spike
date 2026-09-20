@@ -1,0 +1,5 @@
+endpoint,knee,rate
+health,4000,2400
+ingest,400,240
+apievents,300,180
+journal,240,144

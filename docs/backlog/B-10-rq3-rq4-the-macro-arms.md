@@ -1,7 +1,7 @@
 ---
 id: B-10
 title: "RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service"
-status: open
+status: dropped
 priority: P0
 size: L
 stage: stage-4-macro
@@ -68,3 +68,18 @@ what the brief said to do and what makes this item buildable.
 
 Until then the picking rule would hand this item to a loop that cannot finish it, and the loop
 would find that out by spending an iteration on it.
+
+---
+
+## Dropped — 2026-09-20
+
+A2.3's drop rule fired on [B-20](B-20-ceiling-on-the-paged-allocator.md): Kotlin self plus
+runtime is 28.4–28.6 % on every work endpoint, on both allocator builds. **Route A is dropped,
+and with it this probe** — A3 is the upper bound on what PGO can touch, and 28 % of a request is
+not a bound worth spending three days of linker work to measure against a 5 % floor.
+
+The linker obstacles this item found stay documented and
+[B-22](B-22-replay-the-linker-command.md) stays open at P0, because the replayed-link recipe is
+worth having whether or not this probe runs — it is what any future arm on this subject needs.
+
+**What would re-open it:** B-22 landing cheaply, plus a reason to believe 28 % can yield 5 %.

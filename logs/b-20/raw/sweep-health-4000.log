@@ -1,0 +1,42 @@
+time="2026-09-20T19:09:33Z" level=warning msg="Insufficient VUs, reached 200 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=ingest
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✓ 'p(99)<250' p(99)=58.64ms
+
+      {expected_response:true}
+      ✓ 'avg<100' avg=11.82ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 59748   3977.336305/s
+    checks_succeeded...: 100.00% 59748 out of 59748
+    checks_failed......: 0.00%   0 out of 59748
+
+    ✓ accepted
+
+    HTTP
+    http_req_duration..............: avg=11.82ms p(50)=5.92ms p(95)=37.58ms p(99)=58.64ms max=205.14ms
+      { expected_response:true }...: avg=11.82ms p(50)=5.92ms p(95)=37.58ms p(99)=58.64ms max=205.14ms
+    http_req_failed................: 0.00%  0 out of 59748
+    http_reqs......................: 59748  3977.336305/s
+
+    EXECUTION
+    dropped_iterations.............: 253    16.841837/s
+    iteration_duration.............: avg=12.09ms p(50)=6.03ms p(95)=37.7ms  p(99)=59.55ms max=1.07s   
+    iterations.....................: 59748  3977.336305/s
+    vus............................: 118    min=5          max=189
+    vus_max........................: 200    min=200        max=200
+
+    NETWORK
+    data_received..................: 5.1 MB 338 kB/s
+    data_sent......................: 4.8 MB 318 kB/s
+
+
+

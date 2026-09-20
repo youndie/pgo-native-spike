@@ -40,24 +40,20 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (12)
+## Open (8)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08, B-22 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
-| [B-20](docs/backlog/B-20-ceiling-on-the-paged-allocator.md) `[~]` | Re-measure the ceiling on a paged-allocator build | P0 | S | - |
 | [B-22](docs/backlog/B-22-replay-the-linker-command.md) `[ ]` | Replay the linker command instead of resuming from bitcode | P0 | M | - |
-| [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10, B-17 |
 | [B-19](docs/backlog/B-19-stamp-the-commit-into-the-binary.md) `[ ]` | Get the commit into the binary, and a GC-logging flag into xyk's build | P1 | XS | - |
 | [B-21](docs/backlog/B-21-rq0-the-two-numbers.md) `[ ]` | RQ0's two missing numbers, and the macro subject its green requires | P1 | M | B-22 |
 | [B-23](docs/backlog/B-23-flattened-profile-control.md) `[ ]` | Replace A4 with a flattened profile, which carries no information | P1 | S | B-22 |
-| [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08, B-17 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
-## Closed (11)
+## Closed (15)
 
 **The stand, before any compiler work**
 
@@ -73,6 +69,7 @@ an item proposing either does not belong in this file.
 - [B-06](docs/backlog/B-06-attribution-grammar-before-the-ceiling.md) `[x]` - Fix the attribution grammar, with counts, before the ceiling is read
 - [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[x]` - RQ1 — the ceiling: what share of self CPU is Kotlin code
 - [B-17](docs/backlog/B-17-rq1-second-point.md) `[x]` - RQ1, second point: each endpoint at 50-70 % of its own saturation
+- [B-20](docs/backlog/B-20-ceiling-on-the-paged-allocator.md) `[x]` - Re-measure the ceiling on a paged-allocator build
 
 **Feasibility**
 
@@ -81,6 +78,15 @@ an item proposing either does not belong in this file.
 **The mechanism, priced**
 
 - [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[x]` - RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth
+
+**The question itself**
+
+- [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[-]` - RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service
+
+**What it costs to keep**
+
+- [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[-]` - RQ5 — how long a profile lives
+- [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[-]` - RQ6 — what it costs: binary size per owner, build time, A1's overhead
 
 <!-- END INDEX -->
 

@@ -1,0 +1,28 @@
+== health   70648 samples
+   kernel                       21988  31.12%
+   libc-and-other-native        11725  16.60%
+   runtime                       3807   5.39%
+   rust                           181   0.26%
+   KOTLIN self (the gate)       32584  46.12%
+   unresolved                       0   0.00%   
+== ingest   50470 samples
+   kernel                       19923  39.47%
+   libc-and-other-native        13445  26.64%
+   runtime                       1444   2.86%
+   rust                          1386   2.75%
+   KOTLIN self (the gate)       13789  27.32%
+   unresolved                       0   0.00%   
+== apievents   51196 samples
+   libc-and-other-native        19674  38.43%
+   kernel                       11545  22.55%
+   runtime                       3307   6.46%
+   rust                          1188   2.32%
+   KOTLIN self (the gate)       15202  29.69%
+   unresolved                       0   0.00%   
+== journal   14395 samples
+   libc-and-other-native         5382  37.39%
+   kernel                        3552  24.68%
+   runtime                       1112   7.72%
+   rust                           372   2.58%
+   KOTLIN self (the gate)        3854  26.77%
+   unresolved                       0   0.00%   
