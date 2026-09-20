@@ -18,7 +18,7 @@ re-resolved afterwards:
 | Row | Pin | Where it came from |
 |---|---|---|
 | Kotlin release the stand carries | **2.4.20** | sborka `0.4.0.86`'s published `wip` catalog, which is where the subject takes its compiler |
-| Fork tag | `JetBrains/kotlin` at **`v2.4.20`** | follows from the row above; the tag exists upstream and is checked out in [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) |
+| Fork tag | `JetBrains/kotlin` at **`v2.4.20`**, commit **`890ac1d94fdb80eb85f0eeb5be5e4352df987b2f`** | `git ls-remote --tags`, 2026-09-20. The commit is recorded beside the tag because a tag is a movable reference and a baseline that moves is not a baseline |
 | LLVM bundled by that release | **21**, distribution `llvm-21-x86_64-linux-dev-116` | `konan.properties` of the 2.4.20 toolchain |
 | Macro subject | **xyk** — Kotlin/Native, Ktor CIO, sqlx4k/SQLite in process | owner's choice, 2026-09-20; it is the only portfolio subject that already has the two-host stand |
 | Subject build options | **`-Pxyk.httpClient=false -Pxyk.outbound=real -Pxyk.staticLink=true -Pxyk.allocator=paged-off`** — the ingest-only, statically linked, paged-off build | `xyk/server/build.gradle.kts` lines 28–44 name all four axes and their defaults; this is the arm xyk's own two-host measurement was taken on, so the ruler priors describe the same binary |

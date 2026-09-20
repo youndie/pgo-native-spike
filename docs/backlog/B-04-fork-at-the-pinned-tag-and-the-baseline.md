@@ -41,3 +41,57 @@ answering a question.
 - AC: the effort is timed against the two-day criterion, from a recorded start.
 - Anchors: `logs/b-04/`, `ci/fork/build-kotlin-native.sh`,
   `JetBrains/kotlin@v2.4.20!/kotlin-native/README.md`.
+
+---
+
+## Iteration 1 — 2026-09-20
+
+**Two decisions taken without the owner, because the loop asked and got no answer in twenty
+minutes. Both are reversible and both are stated rather than buried.**
+
+### The build host is `bench-a`, not the WSL box
+
+| | `bench-a` | the WSL box |
+|---|---|---|
+| cores | 4 | 20 |
+| memory available | 5 of 7 GB | **3 of 15 GB** |
+| disk free | 52 GB | 634 GB |
+| load | ~0 | 2.0, with three Gradle daemons at ~2.7 GB each and one java at 100 % CPU |
+
+The WSL box is five times the machine and is the portfolio's build host, and it is **not** used
+here for two reasons. It has three gigabytes free against a compiler build that wants four to
+eight, and this portfolio has already recorded what that produces — a load average of 118 and a
+build failing on "Unable to connect to the child process". Making room would mean killing Gradle
+daemons that, with a java process at 100 % CPU beside them, are plausibly **another session's
+work**.
+
+The positive reason matters more than the negative one. `bench-a` is where the existing xyk
+binaries were built — `~/.konan`, `~/.gradle` and a checkout at `/root/soak/src/xyk` are all
+there — so a fork-built compiler and the stock-built baseline it is compared against share a
+glibc, a sysroot and a host. **Kill criterion 2 asks whether the fork is a valid baseline; a
+toolchain built against a different glibc is a variable nobody wants inside that question.**
+
+Cost, stated: four cores, so hours rather than minutes, and no measurement can run on the subject
+host while it builds. Acceptable while B-04 is the only item in flight.
+
+### The comparison uses eight counted rounds, not four
+
+[B-03](B-03-the-ruler.md) left "adopt eight rounds?" as a question for the owner, because raising
+the round count lowers RQ3's "twice the ruler" bar. **For this item the same change runs the other
+way.** Kill criterion 2 asks that the fork's binary land *within* the ruler, so a tighter ruler
+makes the test **harder** to pass: at four counted rounds a fork 4 % slower than stock would pass,
+at eight rounds it would not. Adopting eight rounds here carries none of the concern that made it
+a question there, and the two cases are not the same decision.
+
+### Recorded
+
+- The tag `v2.4.20` resolves to commit `890ac1d94fdb80eb85f0eeb5be5e4352df987b2f`, now pinned in
+  [BRIEF.md](../../BRIEF.md) beside the tag, because a tag is a movable reference.
+- **"Fork" is a local clone plus a patch set in this repository, not a GitHub fork.** The brief's
+  deliverable is the patch set and the recipe; a fork on GitHub adds a place for work to live that
+  is neither this repository nor upstream, and the non-goals rule out anything upstream anyway.
+- `wsl-run` refuses this repository because it has no mutagen session, and it should not have one:
+  the fork is upstream source cloned on the build host, never edited on the Mac.
+
+**Where this stopped:** the shallow clone of `v2.4.20` is running on `bench-a`. Nothing is built
+yet, and how Kotlin/Native is built from this tree is read from the tree rather than from memory.
