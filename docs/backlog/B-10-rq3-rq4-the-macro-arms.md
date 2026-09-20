@@ -55,3 +55,50 @@ unrelated workload, and it is what separates "PGO helps" from "any rebuild moves
   difference anybody can see turns every arm into a null.
 - AC: the three-day budget for RQ3 and RQ4 together is timed from a recorded start.
 - Anchors: `logs/b-10/`, `xyk/bench/run.sh`, `xyk/server/build.gradle.kts`.
+
+---
+
+## Iteration 1 — 2026-09-20. Route B reaches the service, and stops at the link
+
+**Route B scales to the service as far as the compiler: it fails at the linker, twice, for
+reasons specific to a real binary and invisible on a microbenchmark.**
+
+### What worked
+
+| step | |
+|---|---|
+| dumping the service's IR | **71 103 644 bytes**, eight times the microbenchmark's, through the patched build |
+| instrumenting 71 MB with `opt` | **9.3 s**, producing 42 MB of bitcode |
+| the build patch | two properties, `xyk.extraCompilerArgs` and `xyk.extraLinkerArgs`, applied to the rsync copy and recorded in [`patches/`](../../patches/) |
+
+### Where it stops, and neither could have shown up earlier
+
+**1. `undefined hidden symbol: _DYNAMIC`**, referenced by `InstrProfilingPlatformLinux.c.o`'s
+`__llvm_write_binary_ids`. The pinned arm links **`-static`**, and `_DYNAMIC` exists only in a
+dynamic executable. **The profile runtime and a fully static link are incompatible as shipped.**
+The microbenchmark never hit this because it was not linked `-static`.
+
+**2. `undefined symbol: rd_kafka_conf_new`** and the rest of librdkafka.
+`-Xcompile-from-bitcode` **loses the native dependency graph**. The earlier
+`warning: no backend dependencies provided` was not benign — it was this, announcing itself on a
+module that happened to have no cinterop. `DependenciesTracker` computes
+`nativeDependenciesToLink` from the klib graph during normal compilation; resuming from bitcode
+has no klib graph, so the list is empty and every cinterop archive drops out of the link. **There
+is no flag to supply them** — `-Xcompile-from-bitcode` is the only related argument in
+`K2NativeCompilerArguments`.
+
+### The two candidate fixes, and what each costs
+
+| | fix | cost |
+|---|---|---|
+| `_DYNAMIC` | link a stub defining it weakly as zero, or drop `-static` for **both** arms | a stub is surgery on someone else's runtime; dropping `-static` is a **pin change** that also moves RQ6's numbers, and is only acceptable if both arms move together |
+| cinterop archives | pass them by hand through `xyk.extraLinkerArgs`, which the patch already supports | the link is then assembled by this study rather than by the build, and every future arm must repeat it identically or the comparison is between link lines |
+
+**Both are surmountable and both make the measured binary less like the pinned one.** That is the
+thing to weigh before spending the next iteration on them: the brief's A3 is "the profile applied
+to Kotlin code and the runtime bitcode", not "a differently linked binary with a profile".
+
+### Not done
+
+The training run, the A3 and A0-through-Route-B arms, and the eight-round comparison. Nothing was
+measured, so nothing is claimed.
