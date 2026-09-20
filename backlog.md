@@ -40,11 +40,10 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (9)
+## Open (8)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[~]` | RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth | P0 | M | B-08 |
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
 | [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10, B-17 |
@@ -54,7 +53,7 @@ an item proposing either does not belong in this file.
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
-## Closed (10)
+## Closed (11)
 
 **The stand, before any compiler work**
 
@@ -74,6 +73,10 @@ an item proposing either does not belong in this file.
 **Feasibility**
 
 - [B-08](docs/backlog/B-08-rq0-a-merged-profile-applied.md) `[x]` - RQ0 — a profile that merges and applies, by Route B then Route A
+
+**The mechanism, priced**
+
+- [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[x]` - RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth
 
 <!-- END INDEX -->
 

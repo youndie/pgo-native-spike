@@ -1,7 +1,7 @@
 ---
 id: B-09
 title: "RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth"
-status: wip
+status: done
 priority: P0
 size: M
 stage: stage-3-mechanism
@@ -131,3 +131,109 @@ Per-arm training; the promoted-site count and IR excerpts; ns/op confidence inte
 repeats (the harness takes the best of five, which is not the same as a 99 % interval);
 kotlinx-benchmark, which this deviates from by using an in-process timer — recorded as a
 deviation rather than a substitution.
+
+---
+
+## Findings — 2026-09-20
+
+# RQ2 is **GREEN**
+
+**Indirect call promotion fires on Kotlin dispatch, on both shapes, and it is worth 11–13 % where
+the receiver distribution is skewed.** Every declared control holds.
+
+### The IR, at the benchmark's own site
+
+```llvm
+%48 = icmp eq ptr %47, @"kfun:S1#area(kotlin.Long){}kotlin.Long"
+br i1 %48, label %if.true.direct_targ.i, label %if.false.orig_indirect.i, !prof !679
+
+if.true.direct_targ.i:
+  call void @Kotlin_mm_safePointFunctionPrologue() #162
+  %49 = add i64 %acc.1, 1            ; S1.area is x + 1 - the body, inlined
+  br label %"kfun:Shape#area(kotlin.Long){}kotlin.Long.exit"
+```
+
+The guard compares the loaded function pointer against the 90 % receiver, the true branch carries
+**the callee's body rather than a call**, and the branch is weighted from the profile. Guarded
+sites: `itable` 1, `vtable` 1, `both` 2, plus one each in `Shape#area` and `Base#f` — **six in the
+PGO arm against zero in A0**.
+
+### The numbers, interleaved, nine rounds, 99 % intervals
+
+| mode | measure | A0 ns/op | A2 ns/op | change | |
+|---|---|---:|---:|---:|---|
+| **skewed** | `itable` | 1.642 ± 0.080 | **1.459 ± 0.047** | **−11.2 %** | met |
+| **skewed** | `vtable` | 1.272 ± 0.079 | **1.112 ± 0.044** | **−12.6 %** | met |
+| **skewed** | `both` | 2.672 ± 0.128 | 2.301 ± 0.091 | −13.9 % | met |
+| skewed | `sum` (control) | 0.791 ± 0.031 | 0.792 ± 0.028 | +0.1 % | flat |
+| single | `itable` | 1.255 ± 0.060 | 1.156 ± 0.061 | −7.9 % | overlap |
+| single | `vtable` | 1.036 ± 0.057 | 0.966 ± 0.035 | −6.8 % | overlap |
+| single | `both` | 1.961 ± 0.067 | 1.685 ± 0.041 | −14.1 % | met |
+| single | `sum` (control) | 0.752 ± 0.050 | 0.758 ± 0.036 | +0.8 % | flat |
+| uniform | `itable` | 2.155 ± 0.890 | 2.266 ± 0.888 | +5.2 % | overlap |
+| uniform | `vtable` | 2.153 ± 0.966 | 2.227 ± 0.991 | +3.5 % | overlap |
+| uniform | `sum` (control) | 0.871 ± 0.189 | 0.895 ± 0.215 | +2.8 % | flat |
+
+**Green requires promotion and inlining in the IR *and* the micro effect on both dispatch
+shapes.** Both are met on the skewed arm — itable −11.2 % and vtable −12.6 %, each over 10 % with
+non-overlapping 99 % intervals.
+
+### Both controls of known outcome hold
+
+**Control 1 — eight receivers in uniform rotation gain nothing.** +3.5 % to +6.4 %, every
+interval overlapping. Exactly as [B-05](B-05-six-unknowns-of-the-release-pipeline.md) predicted
+from the thresholds it read: at 12.5 % each, no target clears
+`icp-remaining-percent-threshold = 30`, so nothing is promoted and nothing changes.
+
+**Control 2 — 90/10 gains most of what the single-receiver case gains.** It gains **more**:
+−11.2 % and −12.6 % against single's −7.9 % and −6.8 %, neither of which separates. Not an
+inversion — the direction is right — but worth the explanation, because it is the interesting
+part:
+
+> **Promotion helps most where the hardware helps least.** With one receiver the indirect-branch
+> predictor is already perfect, so a guard adds a compare and saves little. At 90/10 the predictor
+> misses a tenth of the time, and the guard converts that into a well-predicted direct branch.
+
+**The unit control is flat in all three modes** and **the known-order pair holds everywhere** —
+`both` is slower than `itable` in every arm of every build.
+
+### Six defects, five of them mine, and each caught by a different guard
+
+1. **An identity implementation.** `S0.area(x) = x + 0` with `acc` starting at zero: the `single`
+   arm computed nothing and timed fastest of all. Caught by the printed sink.
+2. **The receiver index was computed inside the timed loop** — a mask for uniform, a division for
+   skewed — so `skewed` timed *slower* than `uniform`. It was measuring the picker.
+3. **Applying a profile breaks `-Xcompile-from-bitcode`**: `module flag identifiers must be
+   unique — !"CG Profile"`. The module leaving `opt` has zero of them; **kotlinc adds it twice
+   itself**, once in each of its two pipelines, because both run `CGProfilePass` once profile
+   metadata is present. Worked around by giving both pipelines `verify` and doing the
+   optimisation in `opt`.
+4. **That workaround silently disabled all optimisation.** Everything came out 10–20× slower,
+   including the unit control, which does no dispatch and cannot be affected by promotion.
+5. **The repeats were not interleaved** — all of A0, then all of A2. The unit control separated by
+   **31.5 %** on the uniform arm, which a profile cannot cause: it was drift between two blocks
+   of time. The macro half of this study has interleaved since [B-03](B-03-the-ruler.md); the
+   micro half was written without it. `bench_stats.py` now **declares a mode void** when its unit
+   control separates, before printing anything else.
+6. **My first IR check looked for the wrong thing** and concluded promotion had not reached the
+   benchmark's functions — it grepped for direct calls to the implementations rather than for the
+   guard. The guards were there all along.
+
+### Two things to carry forward
+
+**Route B's A0 is not the ordinary A0.** The same source through the normal build is
+`itable-single` 1.55 ns/op; through Route B with `default<O3>` in `opt` it is 1.26–2.43 depending
+on the run. Every arm must be compared against an A0 that took the same route — which every
+number above does.
+
+**The uniform arm is much noisier than the others** (±0.89 against ±0.05), because a mispredicted
+indirect branch has a wide latency distribution. A null there is weaker evidence than a null
+elsewhere, and more rounds would be needed to make it strong.
+
+### Not covered
+
+`-stats` prints nothing from this `opt`, so promoted-site counts came from reading the IR rather
+than from the pass. kotlinx-benchmark was not used: the harness is an in-process monotonic timer
+taking the best of five inside each run, with nine interleaved rounds around it — **a deviation
+from the brief's "kotlinx-benchmark on the native target", recorded as one rather than
+substituted quietly**.
