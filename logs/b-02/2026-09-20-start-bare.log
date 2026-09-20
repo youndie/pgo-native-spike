@@ -1,0 +1,19 @@
+=== start the bare binary ===
+pid=1282618
+port 8099 /health/ready -> 000
+port 8099: no answer
+port 8080 /health/ready -> 000
+port 8080: no answer
+    at 1   ???                                 0x643edd           Init_and_run_start + 525 
+    at 2   ???                                 0x643fda           main + 10 
+    at 3   ???                                 0x8a5347           __libc_start_call_main + 103 
+    at 4   ???                                 0x8a750f           __libc_start_main + 623 
+    at 5   ???                                 0x314164           _start + 36 
+Uncaught Kotlin exception: kotlin.IllegalArgumentException: XYK_DB_PATH is required
+    at 0   ???                                 0x5e4700           kfun:io.github.youndie.xyk#main(){} + 25008 
+    at 1   ???                                 0x643edd           Init_and_run_start + 525 
+    at 2   ???                                 0x643fda           main + 10 
+    at 3   ???                                 0x8a5347           __libc_start_call_main + 103 
+    at 4   ???                                 0x8a750f           __libc_start_main + 623 
+    at 5   ???                                 0x314164           _start + 36 
+=== images available ===

@@ -1,0 +1,21 @@
+total leaf frames : 6871
+kernel            : 2392
+vdso              : 62
+kfun:             : 1468
+other k prefixes  : 1917  [includes kfun above]
+_ZN C++ or Rust   : 0
+unknown           : 0
+--- k-prefixes actually seen ---
+   1468  kfun:
+    513  kotlin:
+--- top non-Kotlin symbols inside the binary ---
+    214 __libc_calloc
+    197 syscall
+    170 __futex_abstimed_wait_cancelable64
+    149 _int_malloc
+    108 malloc_consolidate
+     63 _int_free
+     61 unlink_chunk.isra.0
+     55 free
+=== cleanup ===
+STILL RUNNING

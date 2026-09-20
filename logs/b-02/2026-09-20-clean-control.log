@@ -1,0 +1,22 @@
+=== CLEAN CONTROL: one window, no call graph, self samples by DSO ===
+12288000000 bytes (12 GB, 11 GiB) copied, 7.13882 s, 1.7 GB/s
+    51.70%  [kernel.kallsyms]   
+    44.44%  libc.so.6           
+     3.84%  dd                  
+     0.01%  ld-linux-x86-64.so.2
+--- leaf-frame mode census from perf script ---
+total leaf frames: 7135   kernel: 3689 (51%)   unresolved: 275 (3%)
+
+=== how was xyk started here before? ===
+build.log
+build.sh
+check.sh
+chronik-1.pid
+chronik-2.pid
+chronik-3.pid
+data
+discover.sh
+gen-a.sh
+gen-b.sh
+--- systemd units ---
+--- env the binary expects ---

@@ -1,0 +1,5 @@
+pid=1282808
+/health/ready -> 200
+threads: 1
+=== drive it, and profile the run (instrument check, not a measurement) ===
+--- self samples by DSO ---

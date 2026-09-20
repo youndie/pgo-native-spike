@@ -1,0 +1,29 @@
+=== can the kernel be sampled at all? cpu-clock:k (kernel-only) ===
+8192000000 bytes (8.2 GB, 7.6 GiB) copied, 4.67824 s, 1.8 GB/s
+# Total Lost Samples: 0
+# Samples: 2K of event 'cpu-clock:k'
+# Event count (approx.): 2437437435
+
+=== cpu-clock:u (user-only), same workload, for comparison ===
+8192000000 bytes (8.2 GB, 7.6 GiB) copied, 4.73411 s, 1.7 GB/s
+# Samples: 2K of event 'cpu-clock:u'
+# Event count (approx.): 2341341339
+
+=== are kernel symbols readable? ===
+ffffffff97a00000 T srso_alias_untrain_ret
+ffffffff97a00000 T _stext
+ffffffff97a00000 T _text
+nonzero kallsyms addresses: 2000 / 2000
+
+=== per-sample mode breakdown from the original mixed recording ===
+dd 
+	ffffffff981fe443 __handle_mm_fault ([kernel.kallsyms])
+	ffffffff981fe7ce handle_mm_fault ([kernel.kallsyms])
+	ffffffff97e1734e do_user_addr_fault ([kernel.kallsyms])
+	ffffffff991202e3 exc_page_fault ([kernel.kallsyms])
+	ffffffff97a00bb7 asm_exc_page_fault ([kernel.kallsyms])
+	    75034c9efb8a memset (/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2)
+	    75034c9cf98a _dl_map_new_object (/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2)
+--- counting frames perf marked as kernel ([k]) vs user ([.]) ---
+kernel syms: 20
+user syms:   429
