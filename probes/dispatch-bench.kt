@@ -102,7 +102,13 @@ fun time(label: String, n: Int, body: () -> Long) {
 
 fun main(args: Array<String>) {
     val n = if (args.isNotEmpty()) args[0].toInt() else 20_000_000
+    // A MODE FILTER, so the instrumented binary can be TRAINED ON ONE DISTRIBUTION. Iteration 1
+    // trained on all three at once; the resulting profile was their average, it favoured the
+    // single-receiver arms, and the `uniform` control was therefore given a profile from a
+    // distribution it does not have. That made the +25 % real but unreadable as a control.
+    val only = if (args.size > 1) args[1] else null
     for (mode in listOf("single", "uniform", "skewed")) {
+        if (only != null && only != mode) continue
         val idx = sequence(mode, n)
         time("itable-$mode", n) { itable(idx) }
         time("vtable-$mode", n) { vtable(idx) }
