@@ -1,7 +1,7 @@
 ---
 id: B-04
 title: "Build the fork at v2.4.20, and prove it is a valid baseline"
-status: wip
+status: dropped
 priority: P0
 size: L
 stage: stage-0-stand
@@ -231,3 +231,77 @@ box needed no intervention in the end.
   from source revision because `bench-a` cannot build. This one has no such confound: the
   fork-built and stock-built binaries come from **one host and one commit**, differing only in
   the compiler, which is exactly what kill criterion 2 asks about.
+
+---
+
+## Dropped — 2026-09-20. The fork is not needed for anything the re-plan asks for
+
+**The brief's fixed-setup row says "The pipeline has to be changed, and a stock distribution
+cannot be". That is false at this version.** The stock 2.4.20 distribution already carries every
+mechanism this study needs, and the tools are already on the build host.
+
+### What the stock compiler exposes
+
+Read out of `kotlinc-native -X` and confirmed against the cloned source:
+
+| flag | what it does | where |
+|---|---|---|
+| `-Xllvm-module-passes` | **replaces the module optimization pipeline string outright** — `passes = listOf(config.modulePasses ?: "default<$optimizationFlag>")` | `OptimizationPipeline.kt:348` |
+| `-Xllvm-lto-passes` | the same for the LTO pipeline | `OptimizationPipeline.kt:355` |
+| `-Xsave-llvm-ir-after` + `-Xsave-llvm-ir-directory` | dump IR after a named phase | `SetupConfiguration.kt:76,315` |
+| `-Xcompile-from-bitcode` | **resume compilation from a bitcode file** — Route B's replay | `kotlinc-native -X` |
+| `-Xllvm-variant={dev\|user\|path}` | choose the LLVM distribution | `kotlinc-native -X` |
+| `-Xoverride-clang-options`, `linkerArguments`, `nativeLibraries` | extra inputs reach the link — how `libclang_rt.profile` gets in | `K2NativeCompilerArguments.kt:448,801,860` |
+
+### And the tools are already present, at the pinned revision
+
+`~/.konan/dependencies/llvm-21-x86_64-linux-dev-116` on the build box — **the exact bundle
+`konan.properties` names for `linux_x64`** — 134 binaries:
+
+- `opt`, `llvm-profdata`, `llvm-nm`, `llvm-objdump`, `llc` — all present and working;
+- **`libclang_rt.profile.a`** at `lib/clang/21/lib/x86_64-unknown-linux-gnu/`, which the brief
+  expected to have to build;
+- `opt --print-passes` lists **`pgo-instr-gen`, `pgo-instr-use`, `instrprof` and
+  `pgo-icall-prom`** — including the indirect call promotion pass the entire study rests on.
+
+So [B-05](B-05-six-unknowns-of-the-release-pipeline.md)'s **H1 is confirmed** — the dev bundle
+ships `opt` and no LLVM build is needed — and it was confirmed by looking rather than by
+building.
+
+### The one thing the stock compiler cannot do, and why it does not matter
+
+There is **no `-mllvm` or cl::opt passthrough** — grepping the source for
+`ParseCommandLineOptions`, `mllvm` and `llvmArgs` finds nothing. So `pgo-instr-use` cannot be
+handed a profile path from the compiler's command line, and *that* would need a patch.
+
+**Route B does not go through the compiler for that step.** It dumps bitcode, runs an external
+`opt` — which takes the profile on its own command line — and resumes with
+`-Xcompile-from-bitcode`. [BRIEF](../../BRIEF.md) A2.4 already made Route B the only route for the
+mechanism study and for the one macro probe, so the gap is in a path this study no longer takes.
+
+### Consequences
+
+- **Kill criterion 2 is moot.** It exists to test whether a fork's build is a valid baseline.
+  With no fork, there is no second toolchain and nothing to validate. Recorded in the brief.
+- **[B-05](B-05-six-unknowns-of-the-release-pipeline.md) is unblocked and mostly answered**, by
+  reading rather than building. It no longer depends on this item.
+- **[B-08](B-08-rq0-a-merged-profile-applied.md) is unblocked** — Route B on stock tools.
+- The clone stays. 789 MB at `~/kotlin-fork` on the build box, `890ac1d94`, matching the pinned
+  tag. It earned its place already: the flag semantics above were read out of it, not guessed.
+  **It is a reading reference, not a build.**
+
+### What would re-open this
+
+A2 or A3 through **Route A** — instrumentation inside the compiler's own pipeline — still needs
+the profile path to reach `pgo-instr-use`, and that needs a patch. If Route B turns out to be
+unusable (the bitcode round-trip does not reproduce the binary, or the replayed link differs),
+Route A returns and so does this item.
+
+### A defect, and it is the second of its kind today
+
+The wait loop for the clone used `pgrep -f "git clone .*kotlin"` — **which matches the ssh
+command carrying that very text**, so it waited on itself and would never have exited. The
+identical self-match was found and fixed in `ruler.sh` earlier in this study, with the bracket
+trick `[r]uler-hog`, and the lesson was not carried across. Before that, the same loop's first
+condition tested `[ ! -d .git/refs/remotes ]`, which is true *during* a clone, and reported a
+12 MB tree as a finished one.

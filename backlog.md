@@ -40,16 +40,15 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (12)
+## Open (11)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[~]` | Build the fork at v2.4.20, and prove it is a valid baseline | P0 | L | B-01, B-16 |
 | [B-08](docs/backlog/B-08-rq0-a-merged-profile-applied.md) `[ ]` | RQ0 — a profile that merges and applies, by Route B then Route A | P0 | XL | B-05 |
 | [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[ ]` | RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth | P0 | M | B-08 |
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
-| [B-05](docs/backlog/B-05-six-unknowns-of-the-release-pipeline.md) `[ ]` | Answer the six believed-and-unchecked items against the fork's source | P1 | M | B-04 |
+| [B-05](docs/backlog/B-05-six-unknowns-of-the-release-pipeline.md) `[ ]` | Answer the six believed-and-unchecked items against the fork's source | P1 | M | - |
 | [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10, B-17 |
 | [B-19](docs/backlog/B-19-stamp-the-commit-into-the-binary.md) `[ ]` | Get the commit into the binary, and a GC-logging flag into xyk's build | P1 | XS | - |
 | [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08, B-17 |
@@ -57,13 +56,14 @@ an item proposing either does not belong in this file.
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
-## Closed (7)
+## Closed (8)
 
 **The stand, before any compiler work**
 
 - [B-01](docs/backlog/B-01-pins-and-the-amendment-window.md) `[x]` - Pin every row of the fixed setup, and close the amendment window
 - [B-02](docs/backlog/B-02-can-the-subject-host-be-profiled.md) `[x]` - Can the subject host be profiled at all — perf, or nothing
 - [B-03](docs/backlog/B-03-the-ruler.md) `[x]` - The ruler: A0 against itself, in µs CPU per request, on the two-host stand
+- [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[-]` - Build the fork at v2.4.20, and prove it is a valid baseline
 - [B-16](docs/backlog/B-16-unblock-off-host-builds.md) `[x]` - Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a
 
 **The ceiling**
