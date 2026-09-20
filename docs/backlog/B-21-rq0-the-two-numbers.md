@@ -35,3 +35,21 @@ also what the brief requires beside any null result, so it is owed twice.
   the mismatch count must be near total. A counter that reports zero mismatches for a profile
   that cannot match is counting nothing.
 - Anchors: `logs/b-21/`, `pgo-native-spike/logs/b-08/README.md`.
+
+## Narrowed — 2026-09-20, by B-13
+
+**Two of this item's three unknowns are closed.** Both numbers were computed on the
+microbenchmark by `scripts/profile_applied.py` (which has a control in `make check`), against the
+recipe's own run on bench-a — 934 functions in the profile, **171 with a non-zero counter, 170
+applied, 0 dropped on a hash mismatch** (`logs/b-13/`).
+
+What remains is the third: **the brief defines RQ0's green on the macro subject**, and there is
+no macro binary until [B-22](B-22-replay-the-linker-command.md) produces one. The method is no
+longer in question and costs a second to run, so this item is now that single dependency.
+
+Two findings from computing them, which the next run needs:
+- Kotlin mangled names contain `(`, `#` and `{}` and are emitted as **quoted** LLVM symbols. A
+  define regex that stops at the first `(` truncates every Kotlin name and reports the program as
+  missing from its own module. This was hit and is encoded in the reader's control.
+- PGO prefixes internal-linkage symbols with `<module>;` in the profile. Compared name for name,
+  13 of 171 looked dropped and none were.

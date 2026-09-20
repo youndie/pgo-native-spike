@@ -1,0 +1,20 @@
+Instrumentation level: IR  entry_first = 0  instrument_loop_entries = 0
+Total functions: 935
+Maximum function count: 20021000
+Maximum internal block count: 40021008
+Total number of blocks: 5898
+Total count: 240126015
+===APPLIED===
+defines in the module:                 3043
+functions in the profile:              934
+... with a non-zero counter:           171
+... of those, profile applied:         170
+... of those, dropped:                 1
+      still a define -> hash mismatch: 0
+      no longer a define -> inlined or not emitted: 1
+        absent:   out;
+===HOST===
+ubuntu-8gb-nbg1-1
+7.0.0-30-generic
+-rwxr-xr-x 1 root root 490992 Sep 20 19:33 a0.kexe
+-rwxr-xr-x 1 root root 966304 Sep 20 19:34 a1.kexe

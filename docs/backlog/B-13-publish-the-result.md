@@ -1,7 +1,7 @@
 ---
 id: B-13
 title: "Publish the result, including the parts that were not measured"
-status: open
+status: done
 priority: P0
 size: M
 stage: stage-6-publish
@@ -44,3 +44,46 @@ four likely stops already has its draft in
 - AC: the amendments are reported as amendments — what the brief said, what was changed before the
   first measurement, and why — so that a reader can apply the original thresholds themselves.
 - Anchors: `docs/research/`, `logs/`, `ci/pgo/route-b.sh`.
+
+## Iteration 1 — 2026-09-20. Published, and the recipe was the unmet part
+
+**The document was already most of the way there; the AC that was not met was "the recipe is a
+shell script and a patch set that a reader can run, not a narrative".** The recipe existed as
+prose in six files — BRIEF.md, four backlog items and `logs/b-08/README.md`. It is now
+[`recipe/pgo.sh`](../../recipe/pgo.sh) with [`recipe/example.kt`](../../recipe/example.kt), run
+end to end on **bench-a**, a host that had built nothing in this study (`logs/b-13/`).
+
+- **The script asserts every step that can fail silently**, and has an `ERR` trap so it cannot
+  exit 0 after one fails. Writing it found two such steps immediately: `-Xsave-llvm-ir-directory`
+  prints a warning and **exits 0** when the directory does not exist, and the `essentials` LLVM
+  bundle a normal install pulls has no `opt` at all.
+- **Both load-bearing claims were verified by removing them**, not by the recipe having worked:
+  without `-u__llvm_profile_runtime` the binary links, runs, and writes no profile; with the
+  stock version object the profile merges `Front-end` and `pgo-instr-use` refuses it.
+- **`download.jetbrains.com` is reachable over IPv6** from the bench hosts even though
+  `cache-redirector.jetbrains.com` has no AAAA record — which is how the dev bundle got there.
+- **The two controls that decide numbers are now in `make check`** (`make controls`).
+  `attribution_control.py` already existed and nothing ran it; a control nothing runs is
+  indistinguishable from one that does not exist.
+
+**Two things this iteration found that belong to other items**, recorded rather than absorbed:
+
+- **RQ0's two numbers, on the microbenchmark**: 934 functions in the profile, 171 with non-zero
+  counters, **170 applied, 0 dropped on a hash mismatch**. So
+  [B-21](B-21-rq0-the-two-numbers.md) is no longer three unknowns; it is one, the macro subject,
+  which needs [B-22](B-22-replay-the-linker-command.md)'s link. The reader is
+  `scripts/profile_applied.py` and it has its own control.
+- **[B-23](B-23-flattened-profile-control.md) is moot and was dropped.** Arm A4 is macro and the
+  macro arms are gone; and the question A4 asked — is the gain profile-guided or would any
+  rebuild move it? — is answered on the micro half by a control already in the data: uniform and
+  90/10 come from the **same pair of binaries**, so a rebuild or layout effect would move both.
+
+**What is deliberately not done here.** The item's prose mentions "an article for
+kotlin.website". Publishing outside this repository is the owner's call, not the loop's, and the
+brief's non-goals put everything upstream out of scope. The results document is written so that
+it can become one; nothing was sent anywhere.
+
+**Verdicts at close**: RQ0 grey, RQ1 grey and conditional, RQ2 green on an arm the brief listed
+as a control, RQ3–RQ6 dropped by A2.3 on a rule written before the run that decided it. The
+largest measured effect in the study is a build flag nobody asked about: the paged allocator,
+worth **19.01 % ±2.33 %** of request CPU.

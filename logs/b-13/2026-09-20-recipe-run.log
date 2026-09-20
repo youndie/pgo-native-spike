@@ -1,0 +1,32 @@
+kotlin-native: /root/.konan/kotlin-native-prebuilt-linux-x86_64-2.4.20
+llvm:          /root/.konan/dependencies/llvm-21-x86_64-linux-dev-116
+source:        /root/recipe-run/recipe/example.kt
+out:           /root/recipe-run/out2
+
+== 1/7 compile the baseline and dump its IR
+   IR: 8803236 bytes, 3044 defines
+== 2/7 run pgo-instr-gen,instrprof
+   38338 references to __profc_ counters in the instrumented module
+== 3/7 rebuild the profile runtime with an IR-level version variable
+   libprofile-ir.a: 19 objects, stock version object removed
+== 4/7 link the instrumented binary
+== 5/7 run the instrumented binary and collect a profile
+   1 profraw, 136K total
+== 6/7 merge the profile
+   935 functions, max count 20021000
+== 7/7 apply the profile and verify it took
+   !prof metadata: 134 -> 1410;  functions with an entry count: 28
+
+OK. The profile is at /root/recipe-run/out2/i.profdata and the annotated module at /root/recipe-run/out2/applied.ll.
+To build an optimised binary from it, add the use pass to the normal pipeline:
+  $KN/bin/kotlinc-native -opt -Xllvm-module-passes='pgo-instr-use' ...
+  (-pgo-test-profile-file is an opt flag; through kotlinc the profile goes in the same way
+   the passes above were run, which is why this script stops at the annotated module.)
+
+NOT covered, and both are why this did not reach the service in this study:
+  1. A fully static link. The profile runtime needs a dynamic executable; -static fails with
+     "undefined hidden symbol: _DYNAMIC". Link both arms dynamically and price the change.
+  2. Native dependencies from klibs. -Xcompile-from-bitcode has no klib graph, so every native
+     symbol a klib would have contributed goes undefined (rd_kafka_*, sqlx4k_*, ...). The fix is
+     to replay the linker command the normal build prints, substituting the PGO object, rather
+     than resuming from bitcode at all.

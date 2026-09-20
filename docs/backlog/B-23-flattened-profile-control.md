@@ -1,11 +1,10 @@
 ---
 id: B-23
 title: "Replace A4 with a flattened profile, which carries no information"
-status: open
+status: dropped
 priority: P1
 size: S
 stage: stage-4-macro
-blocked_by: [B-22]
 ---
 
 # B-23 — A flattened profile, as the control A4 was meant to be
@@ -35,3 +34,21 @@ weak by construction.
   the trained one. A flattening that accidentally invalidated the profile would produce the same
   null for the wrong reason.
 - Anchors: `logs/b-23/`, `pgo-native-spike/logs/b-08/README.md`.
+
+## Dropped — 2026-09-20, by B-13
+
+**Its consumer is gone, and its question is answered elsewhere.** A4 is a macro arm: the brief
+scores it inside RQ3 ("A4 within the ruler of A0") and runs it interleaved with A2 and A3. A2.3
+dropped Route A, so there is no macro comparison for a flattened profile to be the control of.
+
+**And the question it was raised to answer — is the gain profile-guided, or does any rebuild move
+the number? — is already answered on the micro half**, by a control that was in the data before
+this item was written. The uniform-rotation and 90/10 measurements come from the same pair of
+binaries. A layout or rebuild effect is a property of the binary and would move both. It moves
+90/10 by −11.2 % and leaves uniform +5.2 %, intervals overlapping. That is the discrimination
+A4 was for.
+
+Kept as a design note rather than deleted: the reasoning about why an "unrelated workload"
+profile is a weak control on Kotlin/Native — two unrelated programs share 99.8 % of their
+defines — is a property of the platform, not of this study, and the next person to write an A4
+into a Kotlin/Native brief needs it.

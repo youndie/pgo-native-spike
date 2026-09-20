@@ -1,0 +1,14 @@
+=== NEGATIVE CONTROL 1: drop -u__llvm_profile_runtime ===
+the link SUCCEEDS
+and the binary writes NO .profraw. This is the failure step 5 asserts against.
+
+=== NEGATIVE CONTROL 2: keep the stock version object ===
+the link SUCCEEDS
+and it DOES write a profile: 1 file
+Instrumentation level: Front-end
+-> applying it:
+error: /root/recipe-run/out2/s.profdata: Not an IR level instrumentation profile
+
+=== host ===
+ubuntu-8gb-nbg1-1
+Sun Sep 20 07:40:26 PM UTC 2026
