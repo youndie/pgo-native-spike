@@ -1,7 +1,7 @@
 ---
 id: B-02
 title: "Can the subject host be profiled at all — perf, or nothing"
-status: open
+status: wip
 priority: P0
 size: XS
 stage: stage-0-stand
