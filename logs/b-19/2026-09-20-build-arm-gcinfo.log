@@ -1,0 +1,10 @@
+arm gcinfo from 6359a88a64677f1c9b74c130fcc75dbbc82fbfef
+BUILD SUCCESSFUL in 3s
+5 actionable tasks: 2 executed, 3 up-to-date
+Configuration cache entry reused.
+  size:   20250200 bytes
+  static: 	not a dynamic executable
+  curl symbols (want 0): 0
+  kfun FUNC symbols: 6369
+  commit compiled in (want >=1): 1
+shipped: bench-a:/root/xyk-gcinfo-6359a88
