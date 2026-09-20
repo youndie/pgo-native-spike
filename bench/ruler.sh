@@ -92,13 +92,38 @@ echo "  arm a pid=$PID_A   arm b pid=$PID_B   CLK_TCK=$CLK   subject nproc=$NPRO
 # One snapshot line: process ticks for both arms, then the machine's own counters.
 snap() { s "awk '{print \$14, \$15}' /proc/$PID_A/stat; awk '{print \$14, \$15}' /proc/$PID_B/stat; head -1 /proc/stat; date +%s.%N"; }
 
+# IS THE SUBJECT IDLE? Asked instantaneously, and that is the whole point of this function's
+# second version. The first read the ONE-MINUTE LOAD AVERAGE and required it below 0.5 - a
+# threshold a run like this one can never reach, because each round leaves the box at ~1.5 busy
+# cores and the average needs minutes to decay. So the gate never opened: it waited its full 150
+# seconds, printed nothing, and proceeded anyway through `|| true`. A check that always times out
+# and then continues is not a check, it is a delay - and worse than a delay here, because a round
+# that starts on the tail of the previous one charges that tail to the arm being measured.
+#
+# Instantaneous busy from /proc/stat over a two-second window: below half a core means the
+# previous round has actually drained, and it becomes true within seconds rather than minutes.
 wait_until_idle() {
-  for _ in $(seq 1 30); do
-    local l; l=$(s "cut -d' ' -f1 /proc/loadavg")
-    awk -v l="$l" 'BEGIN{exit !(l<0.5)}' && return 0
-    sleep 5
+  # THIRD VERSION, and the second failure is the instructive one. Version two summed /proc/stat by
+  # fixed field positions - 2..9 for the first snapshot and 11..18 for the second - on the
+  # assumption of eight numeric columns. Linux prints ten. So every field index was wrong, the
+  # delta came out non-positive, the sentinel fired, and the gate reported "busy 9 cores" sixty
+  # times in a row before giving up. It did not report nothing: it reported a number no four-core
+  # box can produce, and a four-core box claiming nine busy cores is the check telling you it is
+  # broken. Both earlier versions then proceeded anyway through `|| true`, which is what let a
+  # broken gate look like a working one twice.
+  #
+  # This version does the arithmetic where the file is, over however many columns there are.
+  for _ in $(seq 1 60); do
+    local busy
+    busy=$(s "awk '/^cpu /{t=0; for(i=2;i<=NF;i++) t+=\$i; print t, \$5+\$6}' /proc/stat
+              sleep 2
+              awk '/^cpu /{t=0; for(i=2;i<=NF;i++) t+=\$i; print t, \$5+\$6}' /proc/stat" \
+            | awk 'NR==1{t1=$1;i1=$2} NR==2{t2=$1;i2=$2}
+                   END{ d=t2-t1; if(d<=0){print "nan"; exit} print (d-(i2-i1))/d*'"$NPROC"' }')
+    case "$busy" in nan|"") echo "  idle check produced no number" >&2; return 1 ;; esac
+    awk -v b="$busy" 'BEGIN{exit !(b<0.5)}' && return 0
   done
-  echo "  subject never went idle" >&2; return 1
+  echo "  subject never went idle (busy ${busy:-?} cores of $NPROC)" >&2; return 1
 }
 
 run_arm() {
