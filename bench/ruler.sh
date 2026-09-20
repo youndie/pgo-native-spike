@@ -44,6 +44,11 @@ BINARY=${BINARY:-xyk-pagedoff}
 # in this study - fork against stock, A2 against A0, A3 against A0 - is two binaries through the
 # identical protocol, and the ruler is what says whether their difference means anything.
 BINARY_B=${BINARY_B:-$BINARY}
+# An environment difference between the arms, for a probe whose subject is not a different binary.
+# B-18 needs LD_PRELOAD on one side only, and a preload is not a build: the same bytes run twice,
+# once with a different allocator underneath. Empty by default, so every earlier run is unchanged.
+ENV_A=${ENV_A:-}
+ENV_B=${ENV_B:-}
 SECRET=bench-secret
 ENDPOINT=hook-1
 OUT=${OUT:-logs/b-03}
@@ -88,8 +93,8 @@ for i in \$(seq 1 60); do
 done
 rm -rf /root/ruler-run; mkdir -p /root/ruler-run; cd /root
 export XYK_BOOTSTRAP_ENDPOINT_ID=$ENDPOINT XYK_BOOTSTRAP_SECRET=$SECRET XYK_BOOTSTRAP_SUBSCRIBERS=https://sink.invalid/a
-XYK_DB_PATH=/root/ruler-run/a.db XYK_PORT=8091 setsid nohup ./$BINARY > /root/ruler-run/a.log 2>&1 < /dev/null &
-XYK_DB_PATH=/root/ruler-run/b.db XYK_PORT=8092 setsid nohup ./$BINARY_B > /root/ruler-run/b.log 2>&1 < /dev/null &
+$ENV_A XYK_DB_PATH=/root/ruler-run/a.db XYK_PORT=8091 setsid nohup ./$BINARY > /root/ruler-run/a.log 2>&1 < /dev/null &
+$ENV_B XYK_DB_PATH=/root/ruler-run/b.db XYK_PORT=8092 setsid nohup ./$BINARY_B > /root/ruler-run/b.log 2>&1 < /dev/null &
 disown -a
 for i in \$(seq 1 60); do sleep 0.5
   curl -sf -o /dev/null http://127.0.0.1:8091/health/ready && curl -sf -o /dev/null http://127.0.0.1:8092/health/ready && { echo ready; exit 0; }
@@ -226,5 +231,6 @@ esac
   echo "generator: $(g 'hostname; nproc; k6 version' | tr '\n' ' ')"
   echo "arm a:     $BINARY  $(s "stat -c '%s bytes, mtime %y' /root/$BINARY")"
   echo "arm b:     $BINARY_B  $(s "stat -c '%s bytes, mtime %y' /root/$BINARY_B")"
+[ -n "$ENV_A$ENV_B" ] && echo "env a:     ${ENV_A:-(none)}" && echo "env b:     ${ENV_B:-(none)}"
   echo "mode: $MODE  rate: $RATE  duration: $DURATION  rounds: $ROUNDS  connections: $CONNECTIONS"
 } | tee "$OUT/raw/$MODE-hosts.txt"

@@ -40,13 +40,11 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (1)
+## Open (0)
 
-| Task | | Priority | Size | Blocked by |
-|---|---|---|---|---|
-| [B-18](docs/backlog/B-18-allocator-probe.md) `[~]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
+No open tasks.
 
-## Closed (22)
+## Closed (23)
 
 **The stand, before any compiler work**
 
@@ -65,6 +63,7 @@ an item proposing either does not belong in this file.
 - [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[x]` - RQ1 — the ceiling: what share of self CPU is Kotlin code
 - [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[x]` - Cross-check the ceiling with razves's sampler, as a second implementation
 - [B-17](docs/backlog/B-17-rq1-second-point.md) `[x]` - RQ1, second point: each endpoint at 50-70 % of its own saturation
+- [B-18](docs/backlog/B-18-allocator-probe.md) `[x]` - The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts
 - [B-20](docs/backlog/B-20-ceiling-on-the-paged-allocator.md) `[x]` - Re-measure the ceiling on a paged-allocator build
 
 **Feasibility**

@@ -1,7 +1,7 @@
 ---
 id: B-18
 title: "The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts"
-status: wip
+status: done
 priority: P2
 size: S
 stage: stage-1-ceiling
@@ -86,3 +86,31 @@ The `LD_PRELOAD` probe of jemalloc or mimalloc, which asks a different question:
 **system** malloc helps. It matters most in the paged-**off** configuration, where
 `CustomAllocator` forwards to libc — and less in the paged-on one, where it forwards less. The
 two probes interact and the second should be run against whichever allocator B-20 leaves standing.
+
+## Iteration 2 — 2026-09-21. The preload probe: below resolution
+
+**`+0.65 %`, 95 % CI `±6.08 %`, eight paired rounds at 180 rps.** Against the build flag's
+19.01 % ±2.33 %, a different order of thing. Full detail in `logs/b-18/`.
+
+- **AC (same protocol, eight counted rounds) — met**, with 0 dropped, 0 % failed, accounting
+  closing every round and contamination clean.
+- **AC (the preload is shown to have taken effect) — met, and it was the sharpest part.** The
+  **pinned build is `-static`, so `LD_PRELOAD` is ignored entirely**: the service runs, answers
+  200, and jemalloc appears **zero** times in `/proc/<pid>/maps`. That is exactly the silent
+  no-op the AC predicted, and it is total rather than subtle. The probe therefore ran on a
+  **dynamic** build of the same commit — sound because [B-21](B-21-rq0-the-two-numbers.md)
+  showed the two builds' **IR is byte-identical**. On that build the preload is visible in the
+  process (5 mapped regions) *and in a profile*: 68 samples in `libjemalloc.so.2`, with `calloc`,
+  `free`, `malloc` and `posix_memalign` all served by it and **no malloc-family symbol left in
+  libc**.
+- **AC (µs per request, ruler beside it, no RQ verdict) — met.** 7 750 against 7 671 µs; no
+  verdict attached and nothing enters the verdict table.
+
+**The run was noisier than the ruler and the result says so: per-round sd 7.27 % against 2.92 %.**
+Eight pairs should buy ±2.44 % and bought ±6.08 %. Two candidates, not separated here: the stand
+drifts upward through a run (both arms ~7 400 µs early, ~8 000 late, consistent with a growing
+database), and the ruler was characterised on a **static** binary, never on a dynamic one. So
+this excludes an effect near the build flag's 19 % and cannot distinguish 5 % from nothing.
+
+**The pointer this item exists to leave:** the system allocator is not where this service's
+allocation cost sits — the Kotlin/Native build flag is.

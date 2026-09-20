@@ -3,10 +3,10 @@
   █ THRESHOLDS 
 
     http_req_duration
-    ✓ 'p(99)<250' p(99)=22.54ms
+    ✓ 'p(99)<250' p(99)=24.82ms
 
       {expected_response:true}
-      ✓ 'avg<100' avg=6.86ms
+      ✓ 'avg<100' avg=5.93ms
 
     http_req_failed
     ✓ 'rate<0.01' rate=0.00%
@@ -14,27 +14,27 @@
 
   █ TOTAL RESULTS 
 
-    checks_total.......: 6001    199.999946/s
-    checks_succeeded...: 100.00% 6001 out of 6001
-    checks_failed......: 0.00%   0 out of 6001
+    checks_total.......: 5401    179.990519/s
+    checks_succeeded...: 100.00% 5401 out of 5401
+    checks_failed......: 0.00%   0 out of 5401
 
     ✓ accepted
 
     HTTP
-    http_req_duration..............: avg=6.86ms p(50)=5.93ms p(95)=12.65ms p(99)=22.54ms max=40.41ms
-      { expected_response:true }...: avg=6.86ms p(50)=5.93ms p(95)=12.65ms p(99)=22.54ms max=40.41ms
-    http_req_failed................: 0.00%  0 out of 6001
-    http_reqs......................: 6001   199.999946/s
+    http_req_duration..............: avg=5.93ms p(50)=4.84ms p(95)=12.03ms p(99)=24.82ms max=56.75ms
+      { expected_response:true }...: avg=5.93ms p(50)=4.84ms p(95)=12.03ms p(99)=24.82ms max=56.75ms
+    http_req_failed................: 0.00%  0 out of 5401
+    http_reqs......................: 5401   179.990519/s
 
     EXECUTION
-    iteration_duration.............: avg=7.17ms p(50)=6.23ms p(95)=12.99ms p(99)=22.84ms max=40.62ms
-    iterations.....................: 6001   199.999946/s
-    vus............................: 1      min=1         max=2  
+    iteration_duration.............: avg=6.24ms p(50)=5.17ms p(95)=12.57ms p(99)=25.02ms max=57.01ms
+    iterations.....................: 5401   179.990519/s
+    vus............................: 1      min=1         max=6  
     vus_max........................: 200    min=200       max=200
 
     NETWORK
-    data_received..................: 690 kB 23 kB/s
-    data_sent......................: 1.7 MB 55 kB/s
+    data_received..................: 621 kB 21 kB/s
+    data_sent......................: 1.5 MB 50 kB/s
 
 
 

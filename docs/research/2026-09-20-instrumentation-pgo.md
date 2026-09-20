@@ -71,6 +71,15 @@ It does not follow that the product should flip it: that setting is what survive
 that the memory criterion costs this service a fifth of its request CPU** — previously priced by
 the subject at 13 % of ingest throughput, and now measured larger on the CPU axis.
 
+**And a faster *system* malloc is not the answer either.** jemalloc under `LD_PRELOAD`, eight
+paired rounds on the same binary: **+0.65 %, 95 % CI ±6.08 %** — below resolution, against the
+build flag's 19.01 %. Two things worth keeping from it. **The pinned build is `-static`, so
+`LD_PRELOAD` is ignored entirely** — the service runs, answers 200, and jemalloc never enters its
+address space, which is the silent null this probe was designed to catch rather than report. And
+the run's own per-round sd was **7.27 % against the ruler's 2.92 %**, so eight pairs bought
+±6.08 % instead of ±2.44 %: enough to exclude anything near the build flag, not enough to
+separate 5 % from nothing.
+
 **The original wording**: A0 against A0 with the allocator as the only difference,
 eight counted rounds, no toolchain work
 ([B-18](../backlog/B-18-allocator-probe.md)). **RQ1 should be re-measured on a paged-allocator
