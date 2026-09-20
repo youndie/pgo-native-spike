@@ -1,11 +1,11 @@
 ---
 id: B-04
 title: "Build the fork at v2.4.20, and prove it is a valid baseline"
-status: question
+status: open
 priority: P0
 size: L
 stage: stage-0-stand
-blocked_by: [B-01]
+blocked_by: [B-01, B-16]
 ---
 
 # B-04 — Build the fork at `v2.4.20`, and prove it is a valid baseline
@@ -204,3 +204,30 @@ quietly substituting something else.
 **The brief's own ordering says none of this is urgent.** Phase 1 runs before phase 2 precisely
 because the ceiling needs no compiler work and can make the fork work unnecessary. RQ1 is two
 items away and neither needs a build host.
+
+---
+
+## The question is answered — 2026-09-20, by [B-16](B-16-unblock-off-host-builds.md)
+
+**Back to `open`.** The question was which machine builds the fork, and it was a question because
+no amount of work inside this item could answer it. B-16 answered it by needing the same thing
+for a different reason: **the WSL box**, which reaches `github.com`,
+`cache-redirector.jetbrains.com` and `reposilite.kotlin.website`, has 20 cores and 634 GB, and
+freed itself of the daemons that were the objection.
+
+Nothing was bought and nobody's egress was opened. The three options this item listed are all
+moot: the Mac cannot register a `linuxX64` target at all, `bench-a` still has no IPv4, and the
+box needed no intervention in the end.
+
+**What carries over from B-16 and changes how this item runs:**
+
+- The build host is settled and has a recipe: [`bench/build-arm.sh`](../../bench/build-arm.sh),
+  which refuses a dirty tree and prints the commit it built.
+- **A0 is already re-pinned** to xyk at `c4ba99f41d62bd` and built. This item's job is now the
+  *compiler*, not the subject.
+- Kill criterion 2's comparison has a harness: `bench/ruler.sh` takes two binaries, and eight
+  counted rounds is the standard per A2.1.
+- **The criterion is cleaner than it was.** B-16's own comparison could not separate build host
+  from source revision because `bench-a` cannot build. This one has no such confound: the
+  fork-built and stock-built binaries come from **one host and one commit**, differing only in
+  the compiler, which is exactly what kill criterion 2 asks about.
