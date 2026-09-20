@@ -150,7 +150,7 @@ to hold still.
 
 | Option | What it costs | What it buys |
 |---|---|---|
-| **Open egress on `bench-a`** for `github.com` and `cache-redirector.jetbrains.com` | a hole in an allow-list on the measurement host, and four cores means hours per build | the fork-built compiler and the stock baseline share a host, a glibc and a sysroot with every number already taken |
+| ~~**Open egress on `bench-a`**~~ | **not available — see the correction below** | — |
 | **Free the WSL box** — establish the three Gradle daemons are nobody's, stop them | 20 cores and 634 GB, but the baseline is then built against glibc 2.39 and measured on glibc 2.43 | much faster builds, no firewall change |
 | **A third machine** | provisioning | neither of the above |
 
@@ -159,3 +159,48 @@ rule is that it is a draft editor rather than a build stand.
 
 **The loop does not wait for this.** [B-06](B-06-attribution-grammar-before-the-ceiling.md) is
 unblocked, needs neither the fork nor a build host, and is the next thing picked.
+
+---
+
+## Correction to the question — 2026-09-20, same day
+
+**The option the owner chose does not exist, and the option list was wrong because I read the
+evidence too quickly.** `bench-a` was described above as having "a deliberate allow-list". It does
+not have one. It has **no IPv4 route to the internet at all**, because the instance has **no
+public IPv4 address**:
+
+```
+hostname:    ubuntu-8gb-nbg1-1
+public-ipv4: ""
+eth0:        100.64.226.129/32     <- CGNAT, not a public address
+ip -6 route: 1 default             ip -4 route: 0 default
+```
+
+Everything that worked did so over IPv6, and everything that failed is IPv4-only. `getent
+ahostsv6` tells them apart at a glance, because the IPv4-only names come back as `::ffff:`
+mapped addresses rather than real AAAA records:
+
+| host | AAAA | reachable |
+|---|---|---|
+| `repo.maven.apache.org` | `2606:4700::6812:120c` | yes |
+| `download.jetbrains.com` | `2600:9000:2670:...` | yes |
+| `services.gradle.org` | `2606:4700::6810:4865` | yes |
+| `github.com`, `codeload.github.com`, `objects.githubusercontent.com` | `::ffff:140.82.121.x` — **none** | no |
+| `cache-redirector.jetbrains.com` | `::ffff:18.66.147.x` — **none** | no |
+
+So "open egress" is not a configuration change anybody can make on the host; it is assigning the
+instance a public IPv4 in the Hetzner console, which is a purchase. **The earlier framing sent the
+owner's decision down a road that was closed**, and the honest repair is to say so rather than
+quietly substituting something else.
+
+### What is actually available
+
+| Option | Needs | Risk |
+|---|---|---|
+| **Stage the dependencies from the Mac** — clone at the tag locally, rsync the tree, and pre-seed `~/.konan/dependencies/llvm-21-x86_64-linux-dev-116` by hand | nothing bought, nothing weakened | the build may reach for a further IPv4-only host, and each one is found the same slow way |
+| **Assign a public IPv4** to the instance | a console action and a small monthly cost | none technically |
+| **Free the WSL box** | establishing the three Gradle daemons are nobody's | baseline built against glibc 2.39, measured on 2.43 |
+
+**The brief's own ordering says none of this is urgent.** Phase 1 runs before phase 2 precisely
+because the ceiling needs no compiler work and can make the fork work unnecessary. RQ1 is two
+items away and neither needs a build host.
