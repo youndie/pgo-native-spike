@@ -76,6 +76,24 @@ way, and shows it doing so in the same log.
 - **Do not let this become a library, a plugin or an upstream patch.** All three are the brief's
   non-goals. An item proposing one does not belong in the backlog.
 
+## The loop merges its own pull requests
+
+Stated by the owner on 2026-09-20. An iteration that closes an item opens its pull request **and
+merges it** (squash, the item id in the footer, branch deleted), then moves on. Without this the
+loop stalls: statuses on `main` only change when a pull request merges, so every item whose blocker
+sat in an unmerged pull request would stay blocked on a blocker that still reads `open`, and every
+later branch would conflict on `backlog.md` against a growing queue of them.
+
+What does not change: `make check` is still green before the merge, an item is still `done` only if
+its acceptance was **exercised** rather than implemented, and a `question` item still waits for a
+person. A pull request opened by anything other than this loop — dependency bots included — is not
+the loop's to merge.
+
+**There is no CI to be green, and that is the uncomfortable half of this rule.** `make check` runs
+on the machine doing the work, so the gate and the thing being gated share a host and an operator.
+Until this repository is public and standard runners are free, the merge rests on a local run, and
+the log of that run belongs in the pull request rather than in a sentence claiming it passed.
+
 ## Where the work runs
 
 The fork build, the LLVM tools and anything `linuxX64` run on the WSL box through `wsl-run`. The
