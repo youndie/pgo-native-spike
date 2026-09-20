@@ -182,6 +182,34 @@ plausible effect is larger than the best case for PGO.
 
 ---
 
+## Amendment set 3 — the fork is not needed (2026-09-20)
+
+**A3.1 — the "Compiler" and "LLVM tools" rows of the fixed setup are wrong at this version, and
+kill criterion 2 is moot.**
+
+The brief says *"The pipeline has to be changed, and a stock distribution cannot be"* and
+*"built from the exact LLVM revision that Kotlin/Native release bundles"*, implying a fork and an
+LLVM build. Neither is required:
+
+- The stock 2.4.20 compiler exposes **`-Xllvm-module-passes`**, which *replaces the module
+  optimization pipeline string outright*, plus `-Xsave-llvm-ir-after`, `-Xcompile-from-bitcode`,
+  `-Xllvm-variant` and three ways to add linker inputs.
+- **`llvm-21-x86_64-linux-dev-116` — the exact bundle `konan.properties` names — is already on
+  the build host**, with `opt`, `llvm-profdata`, `libclang_rt.profile.a`, and `opt --print-passes`
+  listing `pgo-instr-gen`, `pgo-instr-use`, `instrprof` and `pgo-icall-prom`.
+
+So [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) is **dropped**, and with
+no fork there is no second toolchain to validate: **kill criterion 2 cannot fire and is not
+tested.** Kill criteria 1, 3, 4, 5 and 6 are untouched.
+
+**What is still out of reach without a patch, and why it does not bite.** There is no `-mllvm`
+passthrough, so `pgo-instr-use` cannot be handed a profile path from the compiler's command line.
+Route B applies the profile with an external `opt`, which takes the path on its own command line,
+and A2.4 already made Route B the only route this study takes. If Route B proves unusable, Route
+A and the fork both return.
+
+---
+
 ---
 
 ## The brief as received (2026-09-20, unedited)

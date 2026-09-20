@@ -5,10 +5,29 @@ status: open
 priority: P1
 size: M
 stage: stage-0-stand
-blocked_by: [B-04]
+blocked_by: []
 ---
 
 # B-05 — Answer the six believed-and-unchecked items against the fork's source
+
+> **Unblocked and mostly answered, 2026-09-20, by
+> [B-04](B-04-fork-at-the-pinned-tag-and-the-baseline.md) — which was dropped in the process.**
+> No fork is needed, so this item no longer waits on one, and four of its eight questions are
+> already answered by reading the clone and listing the toolchain:
+>
+> - **H1 confirmed**: the `linux_x64` dev bundle ships `opt`, `llvm-profdata` and
+>   `libclang_rt.profile.a`, and it is already on the build box. No LLVM build.
+> - **Custom pass lists exist as a stock flag** — `-Xllvm-module-passes` replaces the pipeline
+>   string outright.
+> - **Bitcode dump and resume exist** — `-Xsave-llvm-ir-after`, `-Xcompile-from-bitcode`.
+> - **Extra linker inputs exist** — `-Xoverride-clang-options`, `linkerArguments`,
+>   `nativeLibraries`.
+>
+> What remains for this item: the promotion thresholds of the pinned LLVM, whether the runtime
+> bitcode is linked before or after the instrumentation point, whether two builds produce
+> identical IR there, and **the phase names `-Xsave-llvm-ir-after` actually accepts — a bogus one
+> is accepted silently and dumps nothing**, so that flag cannot be trusted to have worked just
+> because it did not error.
 
 The brief lists six things it believes about the release pipeline and has not checked. Two of them
 decide whether the study needs an LLVM build at all, one decides whether arm A3 is free, and one —
