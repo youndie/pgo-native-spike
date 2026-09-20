@@ -1,7 +1,7 @@
 ---
 id: B-05
 title: "Answer the six believed-and-unchecked items against the fork's source"
-status: wip
+status: done
 priority: P1
 size: M
 stage: stage-0-stand
@@ -67,3 +67,116 @@ Two more were added by research and belong in the same pass
 - Anchors: `logs/b-05/`,
   `JetBrains/kotlin@v2.4.20!/kotlin-native/backend.native/compiler/ir/backend.native/src/org/jetbrains/kotlin/backend/konan/llvm`,
   `kotlin-native-prebuilt-macos-aarch64-2.4.20!/konan/konan.properties`.
+
+---
+
+## Findings — 2026-09-20
+
+**Done. All eight answered, none of them by building anything** — by reading the clone and
+listing the toolchain that was already installed.
+
+### 1. Where the release pipeline is assembled, and can it be extended
+
+`OptimizationPipeline.kt`. The module pipeline is one string and **`-Xllvm-module-passes`
+replaces it outright**:
+
+```kotlin
+override val passes = listOf(config.modulePasses ?: "default<$optimizationFlag>")   // :348
+```
+
+Five named pipelines exist — `llvm-mandatory`, `llvm-default`, `llvm-lto`, `llvm-tsan`,
+`llvm-ssp` — and `-Xllvm-lto-passes` does the same for the LTO one.
+
+### 2. Can the LLVM C API carry a profile file path — **no, and it does not matter**
+
+There is no `-mllvm` or cl::opt passthrough: `ParseCommandLineOptions`, `mllvm` and `llvmArgs`
+appear nowhere in `kotlin-native/`. So `pgo-instr-use` cannot be given a profile path through the
+compiler. **Route B hands it to an external `opt` on its own command line**, and
+[A2.4](../../BRIEF.md) already made Route B the only route.
+
+### 3. Do existing `-X` flags allow pass lists, bitcode dumps and extra link inputs — **all three**
+
+`-Xllvm-module-passes`, `-Xsave-llvm-ir-after` with `-Xsave-llvm-ir-directory`,
+`-Xcompile-from-bitcode`, and `-Xoverride-clang-options` / `linkerArguments` / `nativeLibraries`
+(`K2NativeCompilerArguments.kt:448, 801, 860`).
+
+**The phase names, which the brief did not ask for and which the flag will not tell you.** Valid
+values are compiler phase names from `driver/phases/Bitcode.kt` — `LinkBitcodeDependencies`,
+`ModuleBitcodeOptimization`, `LTOBitcodeOptimization`, `MandatoryBitcodeLLVMPostprocessingPhase`,
+`WriteBitcodeFile`, `CStubs`, `VerifyBitcode` and others — or the form `<pipeline>:<llvm-pass>`
+(`OptimizationPipeline.kt:62`).
+
+**A bogus phase name is accepted silently and dumps nothing.** `-Xsave-llvm-ir-after=bogus-phase-name`
+exits zero and produces only the binary. So this flag cannot be trusted to have worked because it
+did not error, and any recipe using it must assert the `.ll` file exists.
+
+Working, verified: `-Xsave-llvm-ir-after=LinkBitcodeDependencies` produces
+`out.LinkBitcodeDependencies.ll`, 8.7 MB of textual IR, 170 364 lines.
+
+### 4. Is the runtime bitcode linked before or after the instrumentation point — **before**
+
+`LinkBitcodeDependencies` runs before `ModuleBitcodeOptimization`, and the module it produces
+contains the runtime:
+
+| in `out.LinkBitcodeDependencies.ll` | defines |
+|---|---:|
+| `kfun:` — Kotlin | 1 519 |
+| `_ZN6kotlin` — the C++ runtime | 559 |
+| `Kotlin_` — the runtime's C entry points | 458 |
+| total | 3 027 |
+
+**So arm A3 is free and arm A2 is the one that costs work.** A3 is "the profile applied to Kotlin
+code *and* the runtime bitcode" — which is simply what the module already is. A2 has to *exclude*
+the runtime, and `noprofile` on those functions is the first candidate, as the brief guessed.
+This is the right way round for [A2.4](../../BRIEF.md), which made A3 the best-case probe.
+
+### 5. Do two builds produce identical IR at the instrumentation point — **effectively yes**
+
+Two builds of the same source, same flags: **12 differing lines out of 170 364**.
+
+- **10 of them are one symbol**: `_Konan_init_3d4afa70-…` against `_Konan_init_050407dc-…` — a
+  fresh UUID per compilation in the module initializer's name.
+- **The other 2 were my own doing**: `!DIFile(filename: "/tmp/irA/x.kexe")` against `irB`, the
+  output path I passed. Not nondeterminism.
+- **The binaries are bit-identical** — same md5.
+
+So exactly one function loses its profile across a rebuild, the module initializer, and nothing
+else moves. **RQ5 is not threatened by build nondeterminism**, which is what the brief feared.
+
+### 6. The promotion thresholds, as found and left alone
+
+`opt -print-all-options -passes=pgo-icall-prom`, LLVM **21.1.6**:
+
+| option | default | what it means |
+|---|---:|---|
+| `icp-max-prom` | **3** | promotions per indirect call site |
+| `icp-max-annotations` | **3** | targets recorded per site |
+| `icp-remaining-percent-threshold` | **30** | a candidate must be 30 % of the *remaining unpromoted* count |
+| `icp-total-percent-threshold` | **5** | and 5 % of the total |
+| `icp-minimum-count-threshold` | 0 | no absolute floor |
+| `icp-cutoff` | 0 | no per-compilation limit |
+| `icp-max-num-vtables` | 6 | vtables annotated per vtable load |
+
+**These make RQ2's two controls predictions rather than hopes.** Eight receivers in uniform
+rotation give each 12.5 %, under the 30 % remaining-count threshold, so nothing should be
+promoted — which is the control's declared outcome. Eight at 90/10 put the dominant target far
+over both thresholds, so it should be promoted — also as declared. If either control comes out
+otherwise, the disagreement is with a number that is now written down.
+
+### H1 and H2
+
+**H1 confirmed** in [B-04](B-04-fork-at-the-pinned-tag-and-the-baseline.md): the `linux_x64` dev
+bundle ships `opt`, `llvm-profdata` and `libclang_rt.profile.a`, already installed.
+
+**H2 is moot.** It asked whether JetBrains' LLVM carries patches over upstream, because an
+upstream-built `opt` might not match. Route B uses **the bundle's own `opt`** — the same LLVM the
+compiler uses, by construction — so there is nothing to mismatch. The question would return only
+if `opt` had to be built.
+
+### Not covered
+
+- Whether `-Xcompile-from-bitcode` actually reproduces an equivalent binary from a dumped module.
+  That is Route B's load-bearing step and it is [B-08](B-08-rq0-a-merged-profile-applied.md)'s
+  first acceptance criterion, not this item's.
+- Whether `-Xllvm-module-passes` accepts a pipeline string containing `pgo-instr-gen`. Also
+  B-08's.
