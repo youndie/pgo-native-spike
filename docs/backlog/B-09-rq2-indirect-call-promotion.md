@@ -1,7 +1,7 @@
 ---
 id: B-09
 title: "RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth"
-status: open
+status: wip
 priority: P0
 size: M
 stage: stage-3-mechanism
