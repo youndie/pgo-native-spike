@@ -1,7 +1,7 @@
 ---
 id: B-06
 title: "Fix the attribution grammar, with counts, before the ceiling is read"
-status: open
+status: wip
 priority: P0
 size: S
 stage: stage-1-ceiling
