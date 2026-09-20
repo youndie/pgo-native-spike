@@ -1,7 +1,7 @@
 ---
 id: B-03
 title: "The ruler: A0 against itself, in µs CPU per request, on the two-host stand"
-status: open
+status: wip
 priority: P0
 size: M
 stage: stage-0-stand
