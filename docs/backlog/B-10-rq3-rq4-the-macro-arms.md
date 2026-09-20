@@ -1,7 +1,7 @@
 ---
 id: B-10
 title: "RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service"
-status: open
+status: wip
 priority: P0
 size: L
 stage: stage-4-macro
