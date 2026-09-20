@@ -1,7 +1,7 @@
 ---
 id: B-19
 title: "Get the commit into the binary, and a GC-logging flag into xyk's build"
-status: open
+status: wip
 priority: P1
 size: XS
 stage: stage-0-stand

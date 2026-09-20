@@ -44,7 +44,7 @@ an item proposing either does not belong in this file.
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-19](docs/backlog/B-19-stamp-the-commit-into-the-binary.md) `[ ]` | Get the commit into the binary, and a GC-logging flag into xyk's build | P1 | XS | - |
+| [B-19](docs/backlog/B-19-stamp-the-commit-into-the-binary.md) `[~]` | Get the commit into the binary, and a GC-logging flag into xyk's build | P1 | XS | - |
 | [B-21](docs/backlog/B-21-rq0-the-two-numbers.md) `[ ]` | RQ0's two missing numbers, and the macro subject its green requires | P1 | M | B-22 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
