@@ -73,7 +73,16 @@ cleanup() { s "pkill -x $BINARY; pkill -f '[r]uler-hog'" >/dev/null 2>&1 || true
 trap cleanup EXIT
 
 echo "=== starting two copies of the SAME binary ($BINARY) on $SUBJECT ==="
-s "pkill -x $BINARY 2>/dev/null; sleep 1; rm -rf /root/ruler-run; mkdir -p /root/ruler-run; cd /root
+# WAIT FOR THE PORTS, not for the processes. xyk's own B-20 recorded this: the binary died on
+# start six times out of twelve, strictly alternating, every time a previous instance still held
+# the port — EADDRINUSE, reported by the binary as "nothing was started and nothing was served".
+# `pkill` returns as soon as the signal is sent, and the listener outlives it.
+s "pkill -x $BINARY 2>/dev/null
+for i in \$(seq 1 60); do
+  ss -ltnH 'sport = :8091 or sport = :8092' | grep -q . || break
+  sleep 1
+done
+rm -rf /root/ruler-run; mkdir -p /root/ruler-run; cd /root
 export XYK_BOOTSTRAP_ENDPOINT_ID=$ENDPOINT XYK_BOOTSTRAP_SECRET=$SECRET XYK_BOOTSTRAP_SUBSCRIBERS=https://sink.invalid/a
 XYK_DB_PATH=/root/ruler-run/a.db XYK_PORT=8091 setsid nohup ./$BINARY > /root/ruler-run/a.log 2>&1 < /dev/null &
 XYK_DB_PATH=/root/ruler-run/b.db XYK_PORT=8092 setsid nohup ./$BINARY > /root/ruler-run/b.log 2>&1 < /dev/null &
