@@ -1,7 +1,7 @@
 ---
 id: B-07
 title: "RQ1 — the ceiling: what share of self CPU is Kotlin code"
-status: open
+status: wip
 priority: P0
 size: M
 stage: stage-1-ceiling

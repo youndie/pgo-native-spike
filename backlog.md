@@ -45,7 +45,7 @@ an item proposing either does not belong in this file.
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
 | [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[?]` | Build the fork at v2.4.20, and prove it is a valid baseline | P0 | L | B-01 |
-| [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[ ]` | RQ1 — the ceiling: what share of self CPU is Kotlin code | P0 | M | B-03, B-06 |
+| [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[~]` | RQ1 — the ceiling: what share of self CPU is Kotlin code | P0 | M | B-03, B-06 |
 | [B-08](docs/backlog/B-08-rq0-a-merged-profile-applied.md) `[ ]` | RQ0 — a profile that merges and applies, by Route B then Route A | P0 | XL | B-05 |
 | [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[ ]` | RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth | P0 | M | B-08 |
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
