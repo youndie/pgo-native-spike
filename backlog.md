@@ -46,7 +46,7 @@ an item proposing either does not belong in this file.
 |---|---|---|---|---|
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08, B-22 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
-| [B-20](docs/backlog/B-20-ceiling-on-the-paged-allocator.md) `[ ]` | Re-measure the ceiling on a paged-allocator build | P0 | S | - |
+| [B-20](docs/backlog/B-20-ceiling-on-the-paged-allocator.md) `[~]` | Re-measure the ceiling on a paged-allocator build | P0 | S | - |
 | [B-22](docs/backlog/B-22-replay-the-linker-command.md) `[ ]` | Replay the linker command instead of resuming from bitcode | P0 | M | - |
 | [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10, B-17 |
 | [B-19](docs/backlog/B-19-stamp-the-commit-into-the-binary.md) `[ ]` | Get the commit into the binary, and a GC-logging flag into xyk's build | P1 | XS | - |
