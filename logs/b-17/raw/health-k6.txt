@@ -1,0 +1,3 @@
+    http_req_duration..............: avg=2.01ms p(50)=1.58ms p(95)=3.88ms p(99)=8.35ms max=48.93ms
+      { expected_response:true }...: avg=2.01ms p(50)=1.58ms p(95)=3.88ms p(99)=8.35ms max=48.93ms
+    http_reqs......................: 48001  959.961768/s
