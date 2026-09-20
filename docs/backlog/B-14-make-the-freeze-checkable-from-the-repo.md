@@ -1,7 +1,7 @@
 ---
 id: B-14
 title: "Make BRIEF.md's freeze checkable from the repository alone"
-status: open
+status: done
 priority: P2
 size: XS
 stage: stage-0-stand
@@ -35,3 +35,31 @@ freeze is the entire reason a pre-registration is worth having.
   changed.
 - Anchors: `pgo-native-spike/BRIEF.md`, `pgo-native-spike/Makefile`,
   `zavarnik/docs/research/source-brief.md`.
+
+## Iteration 1 — 2026-09-20. Done, by the shape the item preferred
+
+The received brief is [docs/research/source-brief.md](../research/source-brief.md), byte for
+byte, and BRIEF.md links to it instead of embedding it. One copy; drift is not possible rather
+than merely detectable.
+
+- **AC — in the repository, checkable without any outside file.** `scripts/brief_freeze.py`
+  hashes everything after a marker line: 18 849 bytes, `sha256 77d8480c…`. The wrapper above the
+  marker is this repository's own prose and stays editable; the frozen text below it does not.
+- **AC — exactly one copy.** The embedded duplicate is gone. **Before removing it, it was
+  un-demoted and hashed independently of B-01** and came out identical to the received file, so
+  the two copies were confirmed equal at the moment they became one.
+- **AC (positive control) — a one-character edit fails.** Demonstrated against `make check`
+  itself, not only in the script's self-test: one byte at offset 10 047 turned the gate red with
+  the two digests printed side by side, and restoring the file turned it green again. The
+  script's `--control` additionally covers a bare trailing newline (the case a tidying editor
+  produces) and confirms that editing the **wrapper** is still allowed.
+- **AC — the digest still matches after the move.** It is the same digest B-01 recorded; what
+  changed is that checking it no longer needs the owner's `~/Downloads`.
+
+**The received file still existed when this ran**, which is the only reason the move could be
+verified rather than asserted. Had the item waited much longer the embedded copy would have been
+the sole surviving text and "unedited" would have had to stand on B-01's word.
+
+**One correction made in passing**, because it contradicted the repository it summarises:
+`docs/README.md` still described the results document as *interim*, with "five of seven research
+questions" and B-13 open. All three were stale.

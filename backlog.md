@@ -40,15 +40,14 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (3)
+## Open (2)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
-## Closed (20)
+## Closed (21)
 
 **The stand, before any compiler work**
 
@@ -57,6 +56,7 @@ an item proposing either does not belong in this file.
 - [B-03](docs/backlog/B-03-the-ruler.md) `[x]` - The ruler: A0 against itself, in µs CPU per request, on the two-host stand
 - [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[-]` - Build the fork at v2.4.20, and prove it is a valid baseline
 - [B-05](docs/backlog/B-05-six-unknowns-of-the-release-pipeline.md) `[x]` - Answer the six believed-and-unchecked items against the fork's source
+- [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[x]` - Make BRIEF.md's freeze checkable from the repository alone
 - [B-16](docs/backlog/B-16-unblock-off-host-builds.md) `[x]` - Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a
 - [B-19](docs/backlog/B-19-stamp-the-commit-into-the-binary.md) `[x]` - Get the commit into the binary, and a GC-logging flag into xyk's build
 

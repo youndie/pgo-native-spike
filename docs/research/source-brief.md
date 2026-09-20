@@ -1,0 +1,221 @@
+---
+id: source-brief
+title: The brief as received, verbatim
+type: research
+status: active
+date: 2026-09-20
+---
+
+> **The frozen text, and the only copy of it in this repository.** This is the brief exactly as
+> it arrived on 2026-09-20, byte for byte: `sha256 77d8480c45cba5eae46d7f46f7006a23fe336492bb43a54f7902c87608859a77`, 18 849 bytes. It was verified
+> against the received file by [B-01](../backlog/B-01-pins-and-the-amendment-window.md) while
+> that file still existed, and [B-14](../backlog/B-14-make-the-freeze-checkable-from-the-repo.md)
+> moved it here so the claim stops depending on a file in somebody's `~/Downloads`.
+>
+> **Nothing below the marker may be edited, including typography and whitespace.** A
+> pre-registration whose frozen half can be tidied is not frozen, so `scripts/brief_freeze.py`
+> hashes everything after the marker line and `make check` runs it. What the study *decided* —
+> the pins, the amendments, the thresholds as operated — is [BRIEF.md](../../BRIEF.md); which of
+> this brief's premises survived contact with a measurement is
+> [research-architecture.md](research-architecture.md) and the results document.
+
+<!-- ---8<--- everything after this line is the received text, byte for byte ---8<--- -->
+# Research brief: instrumentation PGO for Kotlin/Native
+
+2026-09-20 · @Someone
+
+## Question
+
+Can LLVM instrumentation PGO be made to work on a Kotlin/Native service binary from a fork of the toolchain, and how much request CPU does it remove?
+
+The case for it is one LLVM pass. Indirect call promotion records the top targets of every indirect call, then emits a guarded direct call that the inliner can see through. That is speculative devirtualisation without deoptimisation, and Kotlin/Native has no other source of it. Branch weights, hot/cold splitting and hotness-scaled inlining thresholds come with the same profile.
+
+The case against is that PGO improves machine code and nothing else. If a Kotlin/Native service spends most of its CPU in the allocator, the collector and the kernel, the ceiling is low whatever the profile says. RQ1 measures that ceiling before any compiler work is judged.
+
+The working mode is fork, study, prototype. The output is a working recipe in a fork, a verdict per research question with its cost in µs of CPU per request, and the patches themselves. Nothing is proposed to JetBrains or LLVM (see Non-goals).
+
+Three verdicts are possible per question:
+
+- **Green:** the effect is real, the lever provably engaged, and the macro effect clears the ruler.
+- **Grey:** the effect is real in a microbenchmark and below the ruler in the service.
+- **Red:** the lever engaged and nothing moved, or the step could not be made to work inside its budget.
+
+## Fixed setup
+
+Every row is pinned to one version, written into the repo before the first measurement. A range such as "Kotlin 2.x" is not a pin.
+
+| Item | Choice | Reason |
+| --- | --- | --- |
+| Compiler | A fork of `JetBrains/kotlin` at the tag of the Kotlin release the stand already carries; Kotlin/Native built from that source | The pipeline has to be changed, and a stock distribution cannot be |
+| LLVM tools | `opt`, `llvm-profdata` and the compiler-rt profile runtime, built from the exact LLVM revision that Kotlin/Native release bundles | The profile format is locked to the LLVM version, and the Kotlin/Native toolchain ships almost no LLVM tools |
+| Target | `linux_x64`, release binary (`-opt`), one target | Release mode compiles the program as one LLVM module, which promoted calls need in order to inline |
+| Micro harness | kotlinx-benchmark on the native target, ns/op | Same shape as the JMH set of the JIT phase |
+| Macro subject | One Kotlin/Native Ktor service with an in-process data layer | No co-located database taking a third of the machine |
+| Hosts | The two-host protocol of the JIT phase: generator on its own machine, fixed offered rate per endpoint | rps is not a verdict unit on these hosts |
+| Macro unit | µs of CPU per request: `utime+stime` over the clean window, divided by responses | The quantity that survived the JIT phase |
+
+Five build arms are compared. Every arm comes from the same source revision and the same flags apart from the ones named.
+
+| Arm | Build | Role |
+| --- | --- | --- |
+| A0 | Stock release build from the fork, no PGO | Baseline |
+| A1 | Instrumented build | Produces the profile; its overhead is recorded, not judged |
+| A2 | Profile applied to Kotlin code only | The main effect |
+| A3 | Profile applied to Kotlin code and the runtime bitcode | What the allocator and collector gain |
+| A4 | Profile from an unrelated workload applied | Separates "PGO helps" from "any rebuild moves the number" |
+
+Macro runs interleave the arms, five rounds each, with the within-arm spread printed beside every between-arm difference.
+
+## Non-goals
+
+- **Anything upstream.** No YouTrack tickets, no pull requests to `JetBrains/kotlin` or LLVM, no design proposal. The fork is the deliverable. A finding that looks like an upstream bug is written down in the results document and left there.
+- **A maintained fork.** The fork tracks one tag and is not rebased. Keeping it alive across Kotlin releases is a product decision, not a research result.
+- **A Gradle plugin or any packaging.** The recipe is a shell script and a patch set until the verdicts are in.
+- **Sampling PGO.** AutoFDO and CSSPGO need LBR or an equivalent PMU feature, which the available hosts do not expose. Instrumentation is the only route studied.
+- **Other targets.** No macOS, no iOS, no `linux_arm64`. The recipe is expected to carry over; that expectation is not tested.
+- **Garbage collector and allocator changes.** RQ1 measures their share of CPU and arm A3 lets PGO optimise their code. Changing their algorithms is a different study.
+- **Comparison with the JVM or GraalVM Native Image.** The baseline is the same Kotlin/Native binary without PGO.
+- **A JIT.** Not considered in any form.
+- **Debug builds and compiler caches.** Release builds only; per-library caches split the module and hide call targets from the inliner.
+
+## Method
+
+The rules below come from what the JIT brief got wrong. Each one closes a hole that phase found.
+
+### The ruler comes first
+
+Before any arm is compared, A0 runs against itself: the same binary, interleaved, five rounds. The spread of that run is the ruler. Two thresholds are fixed now:
+
+- **Micro effect:** ns/op changes by at least 10%, with non-overlapping 99% confidence intervals.
+- **Macro effect:** µs of CPU per request changes by at least 5%, and by at least twice the ruler.
+
+A difference under twice the ruler is reported as "below resolution, effect under N%", with N stated. It is never reported as zero.
+
+### The evidence chain
+
+```mermaid
+flowchart LR
+  A[Profile exists<br/>.profraw merges] --> B[Profile applied<br/>metadata in the IR]
+  B --> C[Transformation happened<br/>promoted sites counted]
+  C --> D[Micro effect<br/>ns/op]
+  D --> E[Macro effect<br/>CPU per request]
+```
+
+A verdict needs every step up to the one it claims. Steps B and C are read from the binary that is measured, not from a sibling build.
+
+### A null result must show its lever engaged
+
+Every "nothing moved" states three numbers from the measured build: functions whose profile was applied, functions whose profile was dropped on a CFG hash mismatch, and indirect call sites promoted. A null over a lever nobody proved was connected is not a result.
+
+### Units are controlled, not inferred
+
+Any claim about an allocation names the object by class and size. Any microbenchmark arm has a unit control beside it: an arm that performs exactly the one operation being priced and nothing else.
+
+### A known-order pair runs beside everything
+
+One pair whose order follows from the code: a variant that does everything another does plus one step. If it comes out cheaper, the run is discarded and the stand is fixed.
+
+### Attribution is declared before profiling
+
+RQ1 buckets **self** samples by symbol, because PGO acts where self time is spent:
+
+| Bucket | Rule |
+| --- | --- |
+| Kotlin code | Symbols with the `kfun:` prefix: application, libraries and stdlib alike |
+| Runtime | Kotlin/Native C++ runtime symbols: allocator, collector, safepoints, exceptions |
+| libc and other native | `memmove`, `malloc`, SQLite, anything else resolved and not above |
+| Kernel | Samples in kernel mode |
+| Unresolved | Reported as its own row; above 5% of samples the run is not used |
+
+The offered rate is one number per endpoint, stated in the results, and identical across arms.
+
+## Research questions
+
+RQ0 and RQ1 are gates. Outcomes are declared now and not edited afterwards. **Any outcome that is neither green nor red is grey**, and the results say which condition it missed; no run can fall between the two.
+
+| RQ | Question | Green | Red |
+| --- | --- | --- | --- |
+| RQ0 | Feasibility. Can a Kotlin/Native release binary write a `.profraw` that merges, and can the fork apply the resulting `.profdata`? | On the macro subject: the profile merges, and at least 80% of functions with non-zero counts have it applied in the rebuilt IR | Not reached within five working days; see Kill criteria |
+| RQ1 | Ceiling. On A0 at the stated rate, what share of self CPU is Kotlin code, by the attribution table in Method? | At least 40% on a majority of endpoints | Under 20% on every endpoint |
+| RQ2 | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? Sites have several implementors reachable, so the compiler's own closed-world devirtualisation cannot resolve them, and one receiver at run time. Virtual (vtable) and interface (itable) calls are priced separately. | Promotion and inlining visible in the IR at the benchmark's sites, and the micro effect met on both dispatch shapes | No promotion at those sites, or promotion with the micro effect missed on both shapes; the results say which |
+| RQ3 | Macro effect of A2 over A0 on the service. | Macro effect met on a majority of endpoints, and A4 within the ruler of A0 | Below resolution on every endpoint with the lever shown engaged |
+| RQ4 | What does applying the profile to the runtime bitcode add? A3 over A2. | A further macro effect on a majority of endpoints | Below resolution on every endpoint with the lever shown engaged in runtime functions |
+| RQ5 | How long does a profile live? It is applied to the three next real commits of the subject, and separately to a workload it was not trained on. | At least two thirds of the RQ3 effect retained in both tests | Under one third retained in either |
+| RQ6 | What does it cost? Binary size of A2 and A3 against A0, measured per owner with `razves`; build time and A1's run-time overhead are recorded and not judged. | Binary size within +5% of A0 | Binary size above +15% of A0 |
+
+The RQ1 thresholds follow from arithmetic. PGO on C and C++ servers typically returns 5–15% of the code it touches. At a 40% bucket that is 2–6% of a request, which can clear the macro threshold. At a 20% bucket it is 1–3%, which no ruler on these hosts resolves.
+
+RQ2 carries two controls of known outcome. Eight receivers in uniform rotation should gain nothing, since no target dominates. Eight receivers at 90/10 should gain most of what the single-receiver case gains. If either control comes out the other way, RQ2's numbers are not used until the reason is found.
+
+RQ3 and RQ4 run only if RQ1 is not red. If RQ1 is grey they run, and the write-up carries the ceiling next to every macro number.
+
+## Kill criteria
+
+The study stops, and the stop is written up with the same care as a result, in any of these cases:
+
+1. **RQ0 is red.** Five working days pass without a merged profile applied to the macro subject. The write-up is the list of obstacles in the order they were hit, with the patch set as far as it got.
+2. **The fork is not a valid baseline.** A binary from the unmodified fork must land within the ruler of a binary from the stock distribution of the same release. If it does not within two working days, nothing built from the fork can be compared with anything.
+3. **RQ1 is red.** Kotlin code owns under 20% of self CPU on every endpoint. RQ3 and RQ4 are not started. RQ0 and RQ2 may still run as a toolchain study that makes no performance claim. The conclusion is that machine-code quality is not where a Kotlin/Native service spends its CPU, and the bucket table says where it does.
+4. **The ruler is above 5%.** Twice the ruler would exceed any PGO gain worth having. The stand is fixed first or the macro half ends; the micro half may still finish.
+5. **A4 matches A2.** If a profile from an unrelated workload gives the same macro gain as the trained one, the gain is not profile-guided. Macro work stops and the effect is reported as rebuild and layout noise.
+6. **A control inverts and stays unexplained for two working days.** This covers the known-order pair and both RQ2 controls.
+
+Budgets per step: five working days for RQ0, two for RQ1, one per RQ2 dispatch shape, three for RQ3 and RQ4 together, two for RQ5, half a day for RQ6. A step that overruns its budget is recorded as "not completed" with the reason, and the next step starts.
+
+## Tooling and routes
+
+There are two routes to an instrumented binary. Route A is the prototype; Route B is its oracle and its fallback.
+
+- **Route A, inside the fork.** The compiler's LLVM pipeline gains `pgo-instr-gen` and `instrprof` for arm A1, and `pgo-instr-use` with indirect call promotion for A2 and A3. Both must sit at the same point in the pipeline, because the profile is keyed by a hash of each function's CFG at that point. Any pass that runs before one and not the other drops profiles silently.
+- **Route B, outside the compiler.** The fork dumps the linked, pre-optimisation bitcode. An external `opt` from the pinned LLVM revision instruments or applies the profile, and the link step is replayed from the command the compiler prints. Slower and fragile, but it involves no compiler changes and shows what a correct result looks like.
+
+The profile runtime is `libclang_rt.profile`, built from the pinned LLVM revision and added at link time. A service stops on a signal and never reaches `atexit`, so the profile is written one of two ways: a call to `__llvm_profile_write_file` through cinterop from the shutdown path, or continuous mode through `LLVM_PROFILE_FILE` with `%c`. RQ0 records which one works.
+
+| Step | Tool | Evidence |
+| --- | --- | --- |
+| Profile exists | `llvm-profdata merge`, then `show --all-functions --ic-targets` | Counts per function; recorded targets per indirect call site |
+| Profile applied | The rebuilt IR, dumped from the fork | `!prof` branch weights and value-profile metadata; count of functions with and without a profile; hash mismatches |
+| Transformation happened | `opt` statistics and pass remarks for indirect call promotion | Promoted sites, by function |
+| Ceiling (RQ1) | `perf record -e cpu-clock` on an unstripped A0, self samples bucketed by symbol | The attribution table; `cpu-clock` because the guests expose no PMU |
+| Allocation picture (RQ1) | `-Xruntime-logs=gc=info` | Collections, pause and sweep time per window, beside the CPU buckets |
+| Micro | kotlinx-benchmark, native target | ns/op per arm and control |
+| Macro | The pair protocol of the JIT phase | µs of CPU per request, five interleaved rounds per arm |
+| Size (RQ6) | `razves` | Bytes per owner, A0 against A2 and A3 |
+
+Some things are believed and not yet checked. Phase 0 verifies each one against the fork's source and records the answer:
+
+- Where the release pipeline is assembled, and whether it is driven by a pass-pipeline string the fork can extend.
+- Whether the LLVM C API the compiler uses can carry a profile file path, or the path has to arrive another way.
+- Whether existing `-X` flags already allow custom pass lists, bitcode dumps after a named phase, and extra linker inputs. If they do, part of Route A needs no patch.
+- Whether the runtime bitcode is linked before or after the point where instrumentation would run. This decides whether A3 is free and how A2 excludes the runtime: the `noprofile` function attribute is the first candidate.
+- Whether two builds of the same source produce identical IR at the instrumentation point. If function order or generated names differ between builds, profiles are lost to hash and name mismatches before RQ5 is even asked.
+- The promotion thresholds of the pinned LLVM revision: how dominant a target must be, and how many targets per site can be promoted. They are recorded as found and left at their defaults.
+
+## Phases and deliverables
+
+The first three phases are the cheap ones, and each can end the study.
+
+| Phase | Work | Deliverable | Gate |
+| --- | --- | --- | --- |
+| 0 | Fork at the pinned tag, build Kotlin/Native and the LLVM tools, answer the six "believed and not yet checked" items, measure the ruler and the fork-against-stock baseline | Build notes, the answers, the ruler | Kill criteria 2 and 4 |
+| 1 | RQ1 on A0: CPU buckets and GC log for each endpoint | The ceiling table | Kill criterion 3 |
+| 2 | RQ0: a profile out of a hello-world by Route B, then by Route A, then out of the service | Patch set v0, a merged `.profdata`, the applied-profile counts | Kill criterion 1 |
+| 3 | RQ2: the dispatch microbenchmarks with their controls | ns/op table, IR excerpts showing promotion | Kill criterion 6 |
+| 4 | RQ3 and RQ4: arms A0, A2, A3, A4 on the service | CPU per request per arm and endpoint, with lever-engaged counts | Kill criterion 5 |
+| 5 | RQ5 and RQ6 | Retention table, size table | None |
+| 6 | Write-up | Verdict table, the recipe as a script, the patch set, an article for kotlin.website | None |
+
+Phase 1 runs before phase 2 on purpose. The ceiling needs no compiler work, takes two days, and can make the five days of RQ0 unnecessary.
+
+Every published number has its methodology, raw output and the exact build command committed next to it under `docs/research/`. Green, grey, red and kill outcomes get the same level of detail, and withdrawn claims stay in the document with the reason they died.
+
+## Threats to validity
+
+- **The 5–15% prior comes from C and C++.** Kotlin/Native code has different hot spots: allocation calls, safepoint polls, runtime type checks. The prior sizes RQ1's thresholds and nothing else; no verdict rests on it.
+- **Instrumentation changes the program it profiles.** Counters slow A1 and may shift which paths are hot under a fixed offered rate. If A1 cannot hold the training rate, the profile is taken at a lower rate and the results say so.
+- **Counters are racy under threads.** Lost increments are normal in multithreaded instrumentation and skew counts slightly. Branch weights tolerate this; the results check that the top indirect-call targets are stable across two training runs.
+- **A rebuild moves code, and code layout moves performance.** Alignment and function order change between any two builds. Arm A4 exists to catch this, and it is why a gain that an unrelated profile also delivers does not count.
+- **One subject, one target, one workload shape.** A service with an in-process data layer says little about one dominated by network I/O or by serialisation. The verdicts are stated for the pinned setup.
+- **The microbenchmark is cleaner than the service.** A site with one receiver in kotlinx-benchmark can have several in the service. RQ2 prices the mechanism; only RQ3 says whether it matters.
+- **The fork's own build may differ from JetBrains' release build.** Different host compiler, flags or LLVM build options can shift the baseline. Kill criterion 2 tests for this and is the reason it exists.
+- **Self attribution understates what inlining could recover.** A sample in the allocator reached from Kotlin code counts as runtime, though a promoted and inlined call might have removed the allocation's cause. RQ1 therefore understates the ceiling, which biases the gate towards stopping. A red RQ1 is reported with the inclusive share of Kotlin callers beside it, so the reader can see how much the rule cost.
