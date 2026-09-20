@@ -1,7 +1,7 @@
 ---
 id: B-17
 title: "RQ1, second point: each endpoint at 50-70 % of its own saturation"
-status: open
+status: wip
 priority: P0
 size: M
 stage: stage-1-ceiling
