@@ -1,0 +1,44 @@
+=== CONTROL 1: kernel-heavy (dd /dev/zero -> /dev/null) ===
+4000000+0 records out
+16384000000 bytes (16 GB, 15 GiB) copied, 9.8404 s, 1.7 GB/s
+--- kernel vs user share ---
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 9K of event 'cpu-clock'
+# Event count (approx.): 9834834825
+#
+# Children      Self  Shared Object       
+# ........  ........  ....................
+#
+    99.95%     4.23%  dd                  
+            |          
+             --99.91%--0x5af846a16005
+
+=== CONTROL 2: pure userspace spin ===
+3199999960000000
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cpu-clock'
+# Event count (approx.): 7459459452
+#
+# Overhead  Shared Object       
+# ........  ....................
+#
+    99.96%  gawk                
+
+=== the Kotlin/Native binaries on this host ===
+/root/xyk-pagedoff  11475544 bytes
+    .symtab sections: 1
+    kfun: symbols: 6085
+/root/xyk-std  11519840 bytes
+    .symtab sections: 1
+    kfun: symbols: 6098
+/root/xyk-shipping  20426272 bytes
+    .symtab sections: 1
+    kfun: symbols: 6827

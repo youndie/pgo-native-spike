@@ -19,6 +19,8 @@ document it was read in. A hypothesis says where it will be checked and by which
 
 Nothing here is a measurement of this study. **Every number below was taken on another subject,
 another host, or another platform**, and is used only to size a threshold or to order the work.
+Where an item of this study has since contradicted something here, the correction is written **at
+the point of divergence** and marked as one, keeping the reason the first idea was wrong.
 
 ---
 
@@ -216,6 +218,21 @@ arm A3.** xyk's data layer is `sqlx4k`, which links Rust. Under the naive rule t
 the Kotlin/Native runtime bucket, and A3 — "the profile applied to Kotlin code *and the runtime
 bitcode*" — would be an arm nobody can describe. Amendment [A1.4](../../BRIEF.md) defines both by
 owning object or klib, which razves already resolves.
+
+**Correction, 2026-09-20, from [B-02](../backlog/B-02-can-the-subject-host-be-profiled.md): the
+hazard is real but it is instrument-specific, and this section did not say which instrument.**
+razves reads the symbol table itself, so it sees `_ZN…` and the warning applies to it in full.
+`perf` **demangles Itanium symbols by default**, and on the subject host the Kotlin/Native runtime
+came back already legible — `kotlin::alloc::CustomAllocator::CreateObject`,
+`kotlin::gc::internal::MainGCThread<CmsGCTraits>::PerformFullGC`,
+`kotlin::alloc::ObjectSweepTraits::trySweepElement`. Rust demangles to its own namespaces
+(`tokio::`, `sqlx_postgres::`, `core::`), so in perf output the two **are** separable by name. Not
+zero `_ZN` because there is no C++ — zero `_ZN` because perf had already unmangled it, which is
+the kind of thing that reads as an absence if nobody checks.
+
+A1.4 stands unchanged: defining the bucket by owning module is still correct, and it is now also
+the only definition that gives razves and perf the same answer. What changes is the effort — on
+perf output a namespace rule would mostly work, and "mostly" is what A1.4 exists to refuse.
 
 **Consequence 3 — the kernel row is the one bucket razves cannot supply.** An in-process sampler
 sees no kernel-mode samples. Either `perf` runs on the subject host or that row is reported as not

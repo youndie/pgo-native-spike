@@ -1,0 +1,16 @@
+pid holding :8099 = 1282811   (comm: xyk-pagedoff)   threads: 19
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.278 MB xyk.data (6871 samples) ]
+--- self samples by DSO (absolute) ---
+    64.28%  xyk-pagedoff     
+    34.81%  [kernel.kallsyms]
+     0.90%  [vdso]           
+--- leaf census ---
+leaf frames: 6871 | kernel: 2392 | kfun: 1468 | unknown: 56
+--- top resolved Kotlin symbols ---
+     49 kfun:kotlinx.coroutines#runBlocking(kotlin.coroutines.CoroutineContext;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}0:0
+     44 kfun:io.ktor.network.selector.SelectorHelper.$selectionLoopCOROUTINE$0.invokeSuspend#internal
+     35 kfun:io.ktor.utils.io.locks.SynchronizedObject#lock(){}
+     34 kfun:kotlin.coroutines.CombinedContext#get(kotlin.coroutines.CoroutineContext.Key<0:0>){0§<kotlin.coroutines.CoroutineContext.Element>}0:0?
+     31 kfun:kotlin.native.concurrent.Worker#executeAfter(kotlin.Long;kotlin.Function0<kotlin.Unit>){}
+     29 kfun:kotlinx.coroutines.DispatchedTask#run(){}

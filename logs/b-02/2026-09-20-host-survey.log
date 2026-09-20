@@ -1,0 +1,51 @@
+ 09:40:42 up 7 days, 12:57,  3 users,  load average: 0.15, 0.25, 2.66
+4
+-1
+1
++ uptime
++ nproc
++ cat /proc/sys/kernel/perf_event_paranoid
++ cat /proc/sys/kernel/kptr_restrict
++ id -u
+0
++ perf --version
+perf version 7.0.14
++ ls -la /root
++ head -20
+total 163008
+drwx------ 30 root root     4096 Sep 20 09:06 .
+drwxr-xr-x 20 root root     4096 Sep 12 20:43 ..
+drwxr-xr-x  2 root root     4096 Sep 15 05:45 .android
+-rw-r--r--  1 root root     3106 Apr 20 08:46 .bashrc
+drwx------  2 root root     4096 Aug 26 09:06 .cache
+-rw-r--r--  1 root root        0 Aug 26 09:09 .cloud-locale-test.skip
+drwx------  3 root root     4096 Sep 15 18:33 .config
+drwxr-xr-x  5 root root     4096 Sep 13 12:54 .debug
+drwxr-xr-x 12 root root     4096 Sep 18 16:04 .gradle
+drwxr-xr-x  6 root root     4096 Sep 18 08:50 .konan
+drwxr-xr-x  3 root root     4096 Sep 15 05:54 .kotlin
+drwxr-x---  3 root root     4096 Sep 16 01:15 .kube
+-rw-r--r--  1 root root     5643 Sep 16 07:11 .kube-config
+drwxr-xr-x  3 root root     4096 Sep 17 15:54 .m2
+-rw-r--r--  1 root root      132 Apr 20 08:46 .profile
+drwx------  2 root root     4096 Sep 12 20:45 .ssh
+-rw-r--r--  1 root root     1017 Sep 12 22:18 affinity.out
+-rw-r--r--  1 root root      143 Sep 19 21:52 alloc-census.out
+-rw-r--r--  1 root root  8497556 Sep 12 20:44 alloc.tgz
+/usr/bin/docker
++ command -v docker
++ docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}'
++ head
+bench-pg postgres:17-alpine Up 20 hours
++ find / -maxdepth 4 -name '*.kexe' -o -maxdepth 4 -name 'xyk*'
++ head -10
+/root/xyk-std
+/root/soak/xyk-build.log
+/root/soak/src/xyk
+/root/xyk-pagedoff
+/root/xyk-fixed16
+/root/repro/repro.kexe
+/root/tz/rel.kexe
+/root/tz/mst.kexe
+/root/xyk-shipping
+/root/xyk-chart.tgz

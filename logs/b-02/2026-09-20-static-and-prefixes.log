@@ -1,0 +1,13 @@
+=== what are the 513 "kotlin:" frames? ===
+    187 kotlin::alloc::CustomAllocator::CreateObject(TypeInfo
+    143 kotlin::gc::internal::MainGCThread<kotlin::gc::internal::CmsGCTraits>::PerformFullGC(long)
+     47 kotlin::alloc::CustomAllocator::CreateArray(TypeInfo
+     28 void
+     27 kotlin::alloc::ObjectSweepTraits::trySweepElement(unsigned
+=== is the binary statically linked? ===
+bash: line 5: file: command not found
+	not a dynamic executable
+=== so is libc inside the binary DSO? ===
+libc symbols in its symtab: 2
+=== cleanup ===
+subject stopped
