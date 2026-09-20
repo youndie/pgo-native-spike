@@ -1,7 +1,7 @@
 ---
 id: B-01
 title: "Pin every row of the fixed setup, and close the amendment window"
-status: open
+status: done
 priority: P0
 size: S
 stage: stage-0-stand
@@ -39,3 +39,106 @@ would have failed kill criterion 2 for a reason nobody would have looked for.
   static-link setting — because they move RQ1's denominator and RQ6's number.
 - Anchors: `pgo-native-spike/BRIEF.md`, `xyk/server/build.gradle.kts`,
   `xyk/gradle/libs.versions.toml`.
+
+---
+
+## Findings — 2026-09-20
+
+**Done.** Four acceptance criteria, and three of them found something.
+
+### AC1 — the pins table: two rows were not pins
+
+| | |
+|---|---|
+| `Subject build options` | said "xyk's shipping release build: `-Pxyk.allocator=paged-off`, the repository's default static-link setting". The second half is a description, not a value — exactly what this item exists to eliminate. And there are **four** axes in that build, not two |
+| `Fork tag` | cited "the row above" as its source, which is a derivation rather than somewhere a reader can check |
+
+Both corrected. `xyk/server/build.gradle.kts` lines 28–44 declare `xyk.httpClient` (default
+`false`), `xyk.staticLink` (default `false`), `xyk.allocator` (default `paged-off`) and
+`xyk.outbound` (default `real`). The pin is
+`-Pxyk.httpClient=false -Pxyk.outbound=real -Pxyk.staticLink=true -Pxyk.allocator=paged-off`.
+
+**Two of those differ from the build's own defaults, deliberately.** The arm xyk's two-host
+measurement was taken on is the ingest-only build *statically linked*; pinning the defaults would
+have meant that none of the priors this study leans on — the generator ceiling, the round-to-round
+spread — describe the binary it runs. Recorded with its cost in
+[research §1.10](../research/research-architecture.md).
+
+**The judgement in that pin, stated rather than buried:** `httpClient=false` removes the delivery
+half of the product, and the delivery path is where a service of this shape keeps most of its
+polymorphic dispatch — which is the mechanism the whole study rests on. The pin may therefore
+understate what PGO is worth here. It is still the pin, for the three reasons in research §1.10,
+and it is reversible until the first measurement. This is the one row a reader may reasonably want
+changed.
+
+### AC2 — the received brief is byte-identical, and the check does not survive the week
+
+Verified by restoring the embedded copy — undoing the heading demotion and nothing else — and
+comparing with the file as received:
+
+| | |
+|---|---|
+| received | 18 849 bytes, `sha256 77d8480c…859a77` |
+| restored from BRIEF.md | 18 849 bytes, same digest |
+| difference | none |
+
+So the demotion was the only transformation, as claimed. **But the check needed a file in the
+owner's `~/Downloads`, which is not in this repository and will not survive.** From the day it is
+deleted, "unedited" is an assertion nothing here can support. The digest is now recorded in
+BRIEF.md so anyone still holding the file can repeat the check in one command; making it checkable
+from the repository alone is [B-14](B-14-make-the-freeze-checkable-from-the-repo.md), raised rather
+than folded in.
+
+### AC3 — two amendments moved RQ1 towards green without touching a number
+
+This is the criterion that did the most work, and it caught its own author.
+
+- **A1.3** widens the Kotlin bucket from `kfun:` to all twelve Kotlin prefixes. That can only
+  *enlarge* the bucket, so it moves RQ1 towards its 40 % green and away from its 20 % red — while
+  leaving both numbers untouched and therefore looking like a definition rather than a
+  relaxation. It is a correction of a genuine mis-specification (under the literal rule, `kclass:`
+  and `kvar:` symbols fall into "libc and other native", which is wrong), so it stays — with the
+  `kfun:`-only share now published beside the widened one, and the verdict stated against both.
+- **A1.5** lets the kernel row go missing when `perf` will not run. Removing a bucket from the
+  denominator inflates every other bucket: at a kernel share of a third, by about 1.5×. Now
+  qualified — **with the kernel row missing, RQ1 cannot be reported green, grey at best.**
+
+Neither was noticed when the amendments were written. Both were found by taking this item's own
+acceptance criterion literally and checking the five amendments against it one at a time, which is
+the argument for writing the criterion down before doing the work rather than after.
+
+### AC4 — no amendment relaxes a threshold
+
+True as it now stands, and it was not true when this item opened. A1.1, A1.2 and A1.4 do not touch
+RQ1's arithmetic: A1.1 changes an instrument, A1.2 a host protocol, A1.4 moves `sqlx4k`'s Rust
+between two buckets neither of which is the Kotlin one. A1.3 and A1.5 did, and are fixed above.
+
+### The Hosts row, filled in the same run (2026-09-20)
+
+The owner supplied the two ssh destinations while this item was open, so the row stops being a
+description of two machines and becomes their names. Probed, not assumed:
+
+| | `bench-a` (SUBJECT) | `bench-b` (GENERATOR) |
+|---|---|---|
+| cores | 4 | 4 |
+| kernel | `7.0.0-30-generic` | `7.0.0-30-generic` |
+| `perf` | binary present, reports `perf version 7.0.14` | absent, and does not need it |
+
+**`perf` being present is not `perf` working, and this row does not claim it is.** A version string
+says the binary exists and matches the kernel major — which is already more than the portfolio's
+other Linux host manages, where `perf` is a stub built for a different kernel. Whether
+`perf record -e cpu-clock` can actually record inside this VM depends on `perf_event_paranoid` and
+on what the hypervisor exposes, and that is [B-02](B-02-can-the-subject-host-be-profiled.md)'s
+whole question. Nothing here shortens it.
+
+**Both hosts have four cores, which is the regime the study should be most nervous about.** It is
+where xyk's Kotlin arm showed a 2.3× round-to-round spread against the Go twin's 1.02×
+([research §1.8](../research/research-architecture.md)), and the ruler is measured on exactly this
+pair. It makes [B-03](B-03-the-ruler.md) more likely to trip kill criterion 4, not less.
+
+### Not covered
+
+The amendment window is declared closed as of the first measurement, not as of this item — nothing
+has been measured yet, so a sixth amendment is still legitimate until [B-03](B-03-the-ruler.md) or
+[B-02](B-02-can-the-subject-host-be-profiled.md) takes a number. After that, a threshold that turns
+out badly chosen is a stated limitation in the write-up, not an edit.
