@@ -44,7 +44,7 @@ an item proposing either does not belong in this file.
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
+| [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[~]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
 ## Closed (21)

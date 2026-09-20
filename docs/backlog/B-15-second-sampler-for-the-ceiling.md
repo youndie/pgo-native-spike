@@ -1,7 +1,7 @@
 ---
 id: B-15
 title: "Cross-check the ceiling with razves's sampler, as a second implementation"
-status: open
+status: wip
 priority: P2
 size: M
 stage: stage-1-ceiling
