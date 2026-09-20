@@ -1,7 +1,7 @@
 ---
 id: B-05
 title: "Answer the six believed-and-unchecked items against the fork's source"
-status: open
+status: wip
 priority: P1
 size: M
 stage: stage-0-stand
