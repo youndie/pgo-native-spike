@@ -5,7 +5,7 @@ status: open
 priority: P0
 size: L
 stage: stage-4-macro
-blocked_by: [B-07, B-08]
+blocked_by: [B-07, B-08, B-22]
 ---
 
 # B-10 — One best-case macro probe: A3 against A0
@@ -55,3 +55,16 @@ unrelated workload, and it is what separates "PGO helps" from "any rebuild moves
   difference anybody can see turns every arm into a null.
 - AC: the three-day budget for RQ3 and RQ4 together is timed from a recorded start.
 - Anchors: `logs/b-10/`, `xyk/bench/run.sh`, `xyk/server/build.gradle.kts`.
+
+---
+
+## Blocked on B-22 — 2026-09-20
+
+Recorded as a dependency because it is one. Iteration 1 established that the link fails without
+the native dependency graph, and that supplying archives by hand is unbounded — librdkafka's
+five only moved the failure to `sqlx4k`.
+[B-22](B-22-replay-the-linker-command.md) replays the linker command the build prints, which is
+what the brief said to do and what makes this item buildable.
+
+Until then the picking rule would hand this item to a loop that cannot finish it, and the loop
+would find that out by spending an iteration on it.
