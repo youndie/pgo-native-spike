@@ -5,7 +5,6 @@ status: open
 priority: P0
 size: S
 stage: stage-1-ceiling
-blocked_by: [B-18]
 ---
 
 # B-20 — Re-measure the ceiling on a paged-allocator build
@@ -37,3 +36,16 @@ on a build property rather than on the platform**, and the study's headline rest
 - AC: peak RSS is recorded beside the shares. If the paged build cannot hold the service's own
   memory criterion, that belongs next to any ceiling it produces.
 - Anchors: `logs/b-20/`, `pgo-native-spike/bench/ceiling2.sh`, `xyk/server/build.gradle.kts`.
+
+---
+
+## Unblocked — 2026-09-20
+
+**This item was blocked on [B-18](B-18-allocator-probe.md) and should not have been.** B-18 has
+two halves: the allocator *build* comparison, which is done and gave the 19 % figure this item
+exists to follow up, and an `LD_PRELOAD` probe of a faster system malloc, which is a different
+question and stays open as P2.
+
+The dependency was written when both were one item. It left **the most valuable measurement in
+the backlog waiting on a side-probe two priority levels below it** — the kind of inversion that
+is invisible until someone asks what the loop would pick next.
