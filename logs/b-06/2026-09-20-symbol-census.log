@@ -1,0 +1,14 @@
+total symbol-table entries: 31639
+=== every k<word>: prefix in the symbol table, by symbol count ===
+   6085 kfun:
+   2574 kclass:
+   2183 kifacevtable:
+   2162 kifacetable:
+   1819 krefs:
+   1636 kintf:
+    559 kvar:
+     40 kassociatedobjects:
+=== FUNC symbols only (the ones that can carry a self sample) ===
+   6085 kfun:
+=== how much of the table is Kotlin-prefixed at all ===
+FUNC symbols: 11804   Kotlin-prefixed: 6085

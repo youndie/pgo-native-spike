@@ -1,0 +1,25 @@
+=== symbol TYPE for each Kotlin prefix ===
+kfun:                   6085 FUNC 
+kclass:                 2574 OBJECT 
+kifacevtable:           2183 OBJECT 
+kifacetable:            2162 OBJECT 
+krefs:                  1819 OBJECT 
+kintf:                  1636 OBJECT 
+kvar:                    558 OBJECT       1 TLS 
+kassociatedobjects:       40 OBJECT 
+
+=== the 5719 non-Kotlin FUNC symbols: who are they ===
+  Rust legacy mangling (_ZN..17h<hash>E) : 0
+  Rust v0 mangling (_R...)               : 1274
+  other Itanium C++ (_Z...)              : 301
+  plain C identifiers                    : 4144
+
+=== a named symbol on each side of the runtime/Rust boundary ===
+  -- Kotlin/Native C++ runtime:
+_ZN6kotlin5alloc15CustomAllocator12CreateObjectEPK8TypeInfo
+_ZN6kotlin5alloc15CustomAllocator11CreateArrayEPK8TypeInfoj
+  -- Rust (legacy mangling, the hazard):
+  -- plain C (libc, statically linked in):
+_int_malloc
+malloc
+__libc_calloc

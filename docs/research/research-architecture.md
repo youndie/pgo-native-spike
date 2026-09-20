@@ -315,6 +315,26 @@ and if it does not run on the subject host that row is declared missing rather t
 Rejected: writing a sixth attribution script for this study. A second counter is how two checks in
 one run come to report different numbers about the same file.
 
+**Correction, 2026-09-20, from [B-06](../backlog/B-06-attribution-grammar-before-the-ceiling.md):
+razves cannot be the instrument for RQ1's buckets, because it cannot read what `perf` writes.**
+Its `razves profile app.dump app.kexe` consumes a dump produced by the `:sampler` module **linked
+into the process**, not a `perf.data`. The two are different samplers with different input
+formats, and no amount of pinning makes one read the other. This decision was written from
+razves's README saying it turns "bytes **and samples**" into packages, which is true and is not
+the same claim.
+
+So RQ1's grammar is `scripts/attribution.py` in this repository, applied to `perf script` output.
+That is the sixth attribution script D3 set out to avoid, and the reason it is not the failure D3
+warned about: razves counts **bytes** and this counts **samples**, so they are not two counters of
+one quantity and cannot disagree about one. razves remains the instrument for RQ6.
+
+**What is lost is worth naming, because it is the better half.** razves's sampler would be a
+genuinely *independent* second measurement of RQ1 — a different sampler, a different symbol
+reader, its own `BY ORIGIN` table with `kotlin` / `kotlin_runtime` / `<outside the binary>` rows
+and its own count of leaves it could not name. Two implementations find what one cannot. It costs
+linking `:sampler` into the subject and rebuilding it, and it is
+[B-15](../backlog/B-15-second-sampler-for-the-ceiling.md).
+
 ### D4. The ruler and the ceiling come before the fork is built *(2026-09-20)*
 
 The brief already puts phase 1 (the ceiling) before phase 2 (feasibility), and says why: the

@@ -1,0 +1,10 @@
+bucket                        samples   share   first symbol seen
+libc-and-other-native           30194  35.08%   syscall
+kernel                          27329  31.75%   finish_task_switch.isra.0
+kotlin:kfun                     17912  20.81%   kfun:kotlinx.coroutines.CancellableContinuationImpl#getExc
+runtime                          8017   9.31%   Kotlin_processObjectInMark
+rust                             1976   2.30%   tokio::runtime::task::raw::poll::<tokio::runtime::blocking
+vdso                              645   0.75%   [unknown]
+TOTAL                           86073 100.00%
+
+reconciles: True

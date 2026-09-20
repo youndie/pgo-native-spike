@@ -1,0 +1,27 @@
+total leaf frames: 86073
+
+=== the five buckets, self samples ===
+  kernel                       27329
+  kfun: (Kotlin code)          17912
+  other k*: prefixes           10708   <- H4
+  kotlin:: (K/N C++ runtime)   10708
+  [vdso]                       645
+  [unknown]                    529
+
+=== what is left, and is any of it Rust? ===
+  remaining frames: 29479
+  Rust v0 still mangled (_R):  0
+  Rust demangled (crate::):    1887
+  --- top 12 of the remainder ---
+   2720 _int_malloc
+   2032 __libc_calloc
+   1897 syscall
+   1662 malloc_consolidate
+   1199 __futex_abstimed_wait_cancelable64
+   1090 unlink_chunk.isra.0
+   1040 _int_free
+    846 free
+    737 malloc
+    452 Kotlin_processObjectInMark
+    449 tokio::runtime::task::raw::poll::<tokio::runtime::blocking::task::BlockingTask<<tokio::runtime::scheduler::multi_thread::worker::Launch>::launch::{closure#0}>,
+    449 __lll_lock_wake
