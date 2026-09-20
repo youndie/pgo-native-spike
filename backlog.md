@@ -40,16 +40,15 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (4)
+## Open (3)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-21](docs/backlog/B-21-rq0-the-two-numbers.md) `[~]` | RQ0's two missing numbers, and the macro subject its green requires | P1 | M | B-22 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
-## Closed (19)
+## Closed (20)
 
 **The stand, before any compiler work**
 
@@ -71,6 +70,7 @@ an item proposing either does not belong in this file.
 **Feasibility**
 
 - [B-08](docs/backlog/B-08-rq0-a-merged-profile-applied.md) `[x]` - RQ0 — a profile that merges and applies, by Route B then Route A
+- [B-21](docs/backlog/B-21-rq0-the-two-numbers.md) `[x]` - RQ0's two missing numbers, and the macro subject its green requires
 - [B-22](docs/backlog/B-22-replay-the-linker-command.md) `[x]` - Replay the linker command instead of resuming from bitcode
 
 **The mechanism, priced**

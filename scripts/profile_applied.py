@@ -16,11 +16,16 @@ Two traps this encodes, both hit while writing it:
     program as missing from its own module.
   * PGO prefixes internal-linkage symbols with "<module>;" in the profile, so a name-for-name
     comparison counts them as dropped when they were applied.
+  * LLVM escapes non-ASCII bytes in quoted symbol names as \\XX, and Kotlin's mangling of a
+    GENERIC function contains U+00A7 (the section sign) - which the module spells \\C2\\A7 and
+    llvm-profdata prints raw. Compared without unescaping, every generic function in the module
+    looks absent from it. On this service that was 241 functions, all of them generic.
 """
 import re
 import sys
 
 DEF = re.compile(r'^define\b[^@\n]*@(?:"([^"]*)"|([A-Za-z0-9_.$]+))\s*\(')
+ESCAPE = re.compile(r"\\([0-9A-Fa-f]{2})")
 ENTRY_COUNT = re.compile(r'^(![0-9]+) = !\{!"function_entry_count", i64 \d+\}', re.M)
 
 
@@ -51,12 +56,27 @@ def read_module(path):
         m = DEF.match(line)
         if not m:
             continue
-        name = m.group(1) or m.group(2)
+        name = unescape(m.group(1) or m.group(2))
         every.add(name)
         prof = re.search(r"!prof (![0-9]+)", line)
         if prof and prof.group(1) in counts:
             annotated.add(name)
     return every, annotated
+
+
+def unescape(name):
+    """Turn LLVM's \\XX byte escapes back into the UTF-8 the profile prints.
+
+    Kotlin mangles a type parameter with U+00A7, so every generic function's symbol is escaped in
+    the module and raw in the profile. Without this they never compare equal.
+    """
+    if "\\" not in name:
+        return name
+    raw = ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), name)
+    try:
+        return raw.encode("latin-1").decode("utf-8")
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return name
 
 
 def bare(name):
@@ -97,7 +117,7 @@ def report(profile_path, module_path):
 def control():
     """The reader must find Kotlin names, and must not count a prefixed local as dropped."""
     import tempfile, os
-    ll = '''define i64 @"kfun:S1#area(kotlin.Long){}kotlin.Long"(i64 %0) !prof !1 {
+    ll = r'''define i64 @"kfun:S1#area(kotlin.Long){}kotlin.Long"(i64 %0) !prof !1 {
   ret i64 %0
 }
 define internal void @helper() !prof !1 {
@@ -107,6 +127,9 @@ define void @plain_c_function() !prof !1 {
   ret void
 }
 define void @"kfun:#gone(){}"() {
+  ret void
+}
+define void @"kfun:#generic(){0\C2\A7<kotlin.Any?>}"() !prof !1 {
   ret void
 }
 !1 = !{!"function_entry_count", i64 7}
@@ -126,6 +149,10 @@ define void @"kfun:#gone(){}"() {
     Block counts: [7]
   kfun:#never_inlined(){}:
     Hash: 0x4
+    Counters: 1
+    Block counts: [7]
+  kfun:#generic(){0§<kotlin.Any?>}:
+    Hash: 0x5
     Counters: 1
     Block counts: [7]
 '''
@@ -149,7 +176,9 @@ define void @"kfun:#gone(){}"() {
     check("C name with !prof is annotated", "plain_c_function" in annotated, True)
     n, applied, mismatch = report(pp, mp)
     # helper is "out;helper" in the profile and "helper" in the module: applied, not dropped.
-    check("prefixed local counted as applied", applied, 3)
+    check("prefixed local counted as applied", applied, 4)
+    # A generic: the module escapes U+00A7 as \C2\A7, the profile prints it raw.
+    check("escaped generic name matched", u"kfun:#generic(){0§<kotlin.Any?>}" in every, True)
     # never_inlined has a non-zero count and is not a define: absent, not a hash mismatch.
     check("function absent from module is not a mismatch", mismatch, 0)
     return ok
