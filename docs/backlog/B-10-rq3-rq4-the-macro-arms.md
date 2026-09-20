@@ -8,7 +8,19 @@ stage: stage-4-macro
 blocked_by: [B-07, B-08]
 ---
 
-# B-10 — RQ3 and RQ4: the macro arms on the service
+# B-10 — One best-case macro probe: A3 against A0
+
+> **Re-scoped 2026-09-20 by [BRIEF](../../BRIEF.md) A2.4.** Not four arms — **one probe**, and it
+> is the best case rather than the main effect.
+>
+> - **A3 against A0**, through Route B, on the **most favourable endpoints**, at **eight** counted
+>   rounds (A2.1), where the bar is the brief's 5 % floor rather than 9.3 %.
+> - **A3 is the upper bound on the whole idea**, because it covers Kotlin code *and* the C++
+>   runtime — and the C and C++ prior of a 5–15 % return genuinely applies to the runtime, which
+>   is where RQ1 found the CPU.
+> - **A null here stops the study.** A2 cannot succeed where A3 fails, and A4 exists only to
+>   explain a positive result, so neither is run unless this probe is positive.
+> - If it is positive, the brief resumes as written.
 
 The question the study exists to answer, and the one most likely never to be asked: it runs only
 if RQ1 is not red, and the macro half runs only if the ruler cleared kill criterion 4

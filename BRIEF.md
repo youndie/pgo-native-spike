@@ -100,6 +100,88 @@ about 1.5. So with the kernel row missing **RQ1 cannot be reported green — gre
 results say which condition it missed. A gate whose instrument is missing is not allowed to read
 as a pass, and that includes reading as a pass by arithmetic.
 
+## Amendment set 2 — after the first measurement, by the owner (2026-09-20)
+
+**These break the rule the first set was written under, and the break is deliberate and named.**
+Amendments A1.1–A1.5 were made before anything was measured, which is what made them legitimate.
+This set is made after RQ1 and the ruler, and the owner's reason is that **the thresholds
+themselves were mis-sized against a bar that did not exist when they were written**:
+
+> "I set the 40 % and 20 % thresholds against a 5 % macro bar, before the ruler existed. At the
+> measured bar of 9.3 % with four rounds, even a green RQ1 could not clear it: a 15 % return on a
+> 40 % bucket is 6 % of a request."
+
+That is an incoherence rather than an inconvenient number. None of what follows moves a threshold
+to fit a result; A2.1 makes the protocol stricter, A2.2 fills a hole the brief left open, A2.3
+adds a stopping rule that did not exist, and A2.4 is the one that lowers a bar — by adding
+evidence rather than by relaxing a standard. Each is declared **before** the run it governs.
+
+### A2.1 — a macro run is eight counted rounds, not four
+
+At four counted rounds [B-03](docs/backlog/B-03-the-ruler.md) measured the ruler at ±4.6 %, so
+`max(5 %, 2 × ruler)` is **9.3 %** — above anything PGO returns, and above what even a green RQ1
+could produce. At eight counted rounds the ruler is ±2.44 % and the bar is the brief's own 5 %
+floor. **On the three endpoints that do real work, the grey verdict of RQ1 is red in practice at
+four rounds.**
+
+### A2.2 — the offered rate is chosen by a rule, and the run must be shown unsaturated
+
+The brief fixes "one number per endpoint" and never says how the number is chosen, which is the
+same hole the JIT phase's RQ0 had. Both ends of the range distort the gate:
+
+- **Saturated** inflates the Kotlin share — measured, and by a factor of 3.7: `/journal` read
+  55.55 % saturated against 14.92 % clean ([B-07](docs/backlog/B-07-rq1-the-ceiling.md)).
+- **Near-idle** inflates the kernel share, because wakeups dominate, and deflates everything
+  else. 200 rps on a four-core box is close to idle.
+
+**The rule: each endpoint runs at 50–70 % of its own saturation rate**, and every run states its
+delivered rate against its offered rate and its p50. A run whose delivered rate is below its
+offered rate, or whose p50 has left the flat part of the curve, is not used.
+
+### A2.3 — the drop rule for Route A, declared before the measurement it decides
+
+**If Kotlin self plus runtime stays under 40 % on every work endpoint at the rate A2.2 fixes,
+Route A, RQ5 and RQ6 are dropped.** Kotlin self plus runtime is the most arm A3 can touch, so it
+is the ceiling on the ceiling.
+
+Applied to the numbers that already exist — at the old rate, which A2.2 says is the wrong one —
+the rule would **not** fire: `/api/events` 40.69 %, `/journal` 46.24 %, `/hooks/{id}` 33.46 %.
+That is recorded here so the rule cannot later be read as having been chosen to produce a
+foregone conclusion.
+
+### A2.4 — the work is re-ordered, and most of the brief is now conditional
+
+Route A's five days are not spent yet. In order:
+
+1. **Unblock off-host builds** ([B-16](docs/backlog/B-16-unblock-off-host-builds.md)). Every arm
+   and the GC log need a rebuilt xyk and `bench-a` cannot produce one.
+2. **A second RQ1 point** ([B-17](docs/backlog/B-17-rq1-second-point.md)), half a day, under
+   A2.2, with one `--call-graph dwarf` capture per endpoint to fix the inclusive column.
+3. **The mechanism, through Route B only** ([B-08](docs/backlog/B-08-rq0-a-merged-profile-applied.md),
+   [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md)), on the microbenchmark binary,
+   time-boxed to two or three days. RQ2's answer holds at any offered rate, and this is what
+   "fork, study, prototype" is for.
+4. **One best-case macro probe** ([B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md)): **A3
+   against A0**, through Route B, on the most favourable endpoints, at eight rounds. A3 is the
+   upper bound because it covers Kotlin code *and* the C++ runtime, and the C and C++ prior of a
+   5–15 % return genuinely applies to the runtime. **A null here stops the study**: A2 cannot
+   succeed where A3 fails, and A4 is only needed to explain a positive result.
+5. **If positive, resume the brief as written.**
+
+### A2.5 — where the CPU actually goes is logged outside the verdicts
+
+`_int_malloc`, `__libc_calloc` and `malloc_consolidate` are **glibc** functions, and this binary
+carries Kotlin/Native's own allocator. Something is calling libc malloc heavily, and the
+candidates are Ktor and kotlinx-io native-heap buffers, the runtime's own C++ containers, SQLite,
+and the Rust component. A2.4's dwarf capture names the owner.
+
+An `LD_PRELOAD` of jemalloc or mimalloc is a **one-hour probe that needs no compiler work**
+([B-18](docs/backlog/B-18-allocator-probe.md)). Allocator changes are a non-goal of this brief, so
+the probe is recorded outside the verdicts — it is the natural RQ1 of the next study, and its
+plausible effect is larger than the best case for PGO.
+
+---
+
 ---
 
 ## The brief as received (2026-09-20, unedited)

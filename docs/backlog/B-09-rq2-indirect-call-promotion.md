@@ -10,6 +10,13 @@ blocked_by: [B-08]
 
 # B-09 — RQ2: does indirect call promotion fire on Kotlin dispatch
 
+> **Re-scoped 2026-09-20 by [BRIEF](../../BRIEF.md) A2.4.** Through **Route B only**, on the
+> microbenchmark binary, inside the two-to-three-day box shared with
+> [B-08](B-08-rq0-a-merged-profile-applied.md). **This is now the study's primary deliverable**:
+> RQ1 came back grey and the macro half may not be answerable on these hosts, but whether
+> indirect call promotion fires on Kotlin vtable and itable dispatch is a fact about the compiler
+> that holds at any offered rate, on any host.
+
 The one LLVM pass the whole case rests on. Indirect call promotion records the top targets of every
 indirect call, then emits a guarded direct call the inliner can see through — speculative
 devirtualisation without deoptimisation, which Kotlin/Native has no other source of. Green needs

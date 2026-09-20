@@ -28,7 +28,7 @@ an item proposing either does not belong in this file.
 |---|---|---|
 | `stage-0-stand` | The stand, before any compiler work | The pins, the instrument, the ruler, and whether the fork is a valid baseline. Two kill criteria live here and neither needs a profile. |
 | `stage-1-ceiling` | The ceiling | RQ1, plus the attribution grammar it is read through. Kill criterion 3. |
-| `stage-2-feasibility` | Feasibility | RQ0. The longest budget in the study, taken third on purpose. Kill criterion 1. |
+| `stage-2-feasibility` | Feasibility | RQ0, **Route B only** since A2.4. Route A's five days are not spent. Kill criterion 1. |
 | `stage-3-mechanism` | The mechanism, priced | RQ2 and its two controls of known outcome. Kill criterion 6. |
 | `stage-4-macro` | The question itself | RQ3 and RQ4 on the service. Kill criterion 5. |
 | `stage-5-cost` | What it costs to keep | RQ5 and RQ6. |
@@ -40,7 +40,7 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (10)
+## Open (13)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
@@ -49,11 +49,14 @@ an item proposing either does not belong in this file.
 | [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[ ]` | RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth | P0 | M | B-08 |
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
+| [B-16](docs/backlog/B-16-unblock-off-host-builds.md) `[ ]` | Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a | P0 | M | - |
+| [B-17](docs/backlog/B-17-rq1-second-point.md) `[ ]` | RQ1, second point: each endpoint at 50-70 % of its own saturation | P0 | M | B-16 |
 | [B-05](docs/backlog/B-05-six-unknowns-of-the-release-pipeline.md) `[ ]` | Answer the six believed-and-unchecked items against the fork's source | P1 | M | B-04 |
-| [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10 |
-| [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08 |
+| [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10, B-17 |
+| [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08, B-17 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
+| [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
 
 ## Closed (5)
 
@@ -71,6 +74,40 @@ an item proposing either does not belong in this file.
 <!-- END INDEX -->
 
 ## Decisions worth not re-litigating
+
+**The plan changed after RQ1, and the owner named the reason as a sizing error of their own.**
+[BRIEF](BRIEF.md) amendment set 2, 2026-09-20: the 40 % and 20 % gate thresholds were written
+against a 5 % macro bar, before the ruler existed. At the measured bar of 9.3 % with four rounds,
+*even a green RQ1 could not have cleared it* — a 15 % return on a 40 % bucket is 6 % of a request.
+So the grey verdict is red in practice on every endpoint that does real work, and the five days of
+Route A are not spent. The order is now: unblock off-host builds → a second ceiling point at a
+rate chosen by rule → the mechanism through Route B only → one best-case A3-against-A0 probe → stop
+or resume.
+
+**Amendment set 2 breaks the rule set 1 was written under, deliberately.** The first set was made
+before anything was measured, which is what made it legitimate. This one is made after, and it is
+allowed because it fixes an incoherence rather than an inconvenient number: A2.1 makes the
+protocol stricter (eight rounds), A2.2 fills a hole the brief left open (how the offered rate is
+chosen), A2.3 adds a stopping rule that did not exist, and A2.4 re-orders the work. A2.1 is the
+one that lowers a bar, and it lowers it by adding evidence rather than by relaxing a standard.
+
+**The drop rule was declared before the run it decides, and its answer on existing data is
+recorded.** If Kotlin self plus runtime stays under 40 % on every work endpoint, Route A, RQ5 and
+RQ6 are dropped. On [B-07](docs/backlog/B-07-rq1-the-ceiling.md)'s numbers — at the rate A2.2 says
+is the wrong one — it would **not** fire: 40.69 %, 46.24 %, 33.46 %. Written down so the rule
+cannot later read as chosen for its answer.
+
+**The offered rate is part of the gate, and neither existing point is the right one.** Saturation
+inflates the Kotlin share by a measured factor of 3.7; near-idle inflates the kernel share,
+because a server at 200 rps on four cores mostly gets woken up. The number that decides this study
+sits between, and A2.2 fixes it at 50–70 % of each endpoint's own saturation.
+
+**Where the CPU actually goes may be worth more than the question the brief asks.** The largest
+bucket on three of four endpoints is glibc malloc, in a binary carrying Kotlin/Native's own
+allocator, with `PerformFullGC` on top. An `LD_PRELOAD` probe is an hour and no compiler work
+([B-18](docs/backlog/B-18-allocator-probe.md)), its plausible effect is larger than the best case
+for PGO, and it is logged **outside the verdicts** because allocator changes are a brief non-goal.
+
 
 **The ruler comes before the fork, not after it.** The brief already puts the ceiling ahead of
 feasibility and says why — the ceiling needs no compiler work and can make five days of RQ0
