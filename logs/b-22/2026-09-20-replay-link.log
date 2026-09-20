@@ -1,0 +1,41 @@
+=== capture ===
+link line:        2232 bytes
+compiler object:  /home/youndie/b22run/w/tmp/base.kexe.o
+IR:               3027 defines
+control:          BYTE-IDENTICAL to the ordinary build
+
+THE USE ARM IS NOT REACHABLE THIS WAY ON STOCK 2.4.20, and this is the finding, not a to-do.
+A module carrying profile metadata makes kotlinc emit the "CG Profile" module flag twice - once
+from its LTO pipeline and once from the clang++ codegen step - and the module is then rejected:
+  module flag identifiers must be unique (or of 'require' type) !"CG Profile"
+The only -Xllvm-lto-passes value that avoids it is one that does no LTO ("verify"), and the
+optimisation then has to be supplied externally. `opt -passes=default<O3>` does NOT stand in for
+what Kotlin/Native's own LTO does: it internalises and DCEs 3 027 defines down to 411, and the
+externally optimised binary came out 3.8x larger than the ordinary build. So a USE arm built this
+way is not comparable to the pinned build, which is what an A3 arm would have to be.
+
+=== train ===
+   kotlinc's own link failed, as expected; taking its object
+   object: /home/youndie/b22run/w/tI/discard.kexe.o (5441000 bytes)
+   linked: /home/youndie/b22run/w/train.kexe (947736 bytes)
+
+Run it under the workload with LLVM_PROFILE_FILE=<dir>/%p.profraw, then:
+  /home/youndie/.konan/dependencies/llvm-21-x86_64-linux-dev-116/bin/llvm-profdata merge -output=p.profdata <dir>/*.profraw
+  /home/youndie/.konan/dependencies/llvm-21-x86_64-linux-dev-116/bin/llvm-profdata show p.profdata | grep -i 'instrumentation level'   # must say IR
+
+THE USE ARM IS NOT REACHABLE THIS WAY ON STOCK 2.4.20, and this is the finding, not a to-do.
+A module carrying profile metadata makes kotlinc emit the "CG Profile" module flag twice - once
+from its LTO pipeline and once from the clang++ codegen step - and the module is then rejected:
+  module flag identifiers must be unique (or of 'require' type) !"CG Profile"
+The only -Xllvm-lto-passes value that avoids it is one that does no LTO ("verify"), and the
+optimisation then has to be supplied externally. `opt -passes=default<O3>` does NOT stand in for
+what Kotlin/Native's own LTO does: it internalises and DCEs 3 027 defines down to 411, and the
+externally optimised binary came out 3.8x larger than the ordinary build. So a USE arm built this
+way is not comparable to the pinned build, which is what an A3 arm would have to be.
+
+=== the training binary writes an IR profile? ===
+42
+Instrumentation level: IR  entry_first = 0  instrument_loop_entries = 0
+=== host ===
+DESKTOP-85OS64M
+20
