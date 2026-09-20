@@ -398,6 +398,30 @@ are not.
 **The inclusive column is a lower bound.** 21.9–33.6 % of stacks have no callers, because
 optimised Kotlin/Native omits frame pointers.
 
+## RQ1 has one sampler and one grammar, and a second could not be had
+
+Both were written here, which is a weakness the study named from the start and tried to remove:
+razves offers an independent sampler, an independent symbol reader, and its own `BY ORIGIN` table
+drawing RQ1's boundary by somebody else's hand ([B-15](../backlog/B-15-second-sampler-for-the-ceiling.md),
+`logs/b-15/`).
+
+**It cannot run against this subject.** razves samples in a signal handler; the signal interrupts
+Ktor's CIO selector in `pselect`; and **Ktor's native selector does not retry on `EINTR`** — it
+converts errno to an exception, uncaught, and the process dies. Same binary, same load, the
+sampler the only difference: **off survives, 997 Hz dies, and 97 Hz died in two of three
+60-second runs**.
+
+**The defect is not razves's.** A `pselect` caller that ignores `EINTR` is broken for any process
+that receives a signal at all; razves only makes it frequent enough to see. The general form is
+worth more than this study's cross-check: **no in-process signal-based profiler can run against
+Ktor CIO on Kotlin/Native** until that loop retries — and it is why `perf`, which samples from
+outside and delivers no signals, remains the only instrument that can answer RQ1 here.
+
+Everything short of the run works: the sampler resolves, links, and profiles an arithmetic
+control at `kotlin 100 %`, and the subject rebuilt with it costs **22 160 bytes** more than the
+pin. **No published number changes**; what is missing is the check on them, and the caveat stands
+with a price attached.
+
 ## Open questions
 
 **Why does `--call-graph dwarf` return nothing on Kotlin/Native?** A control that the

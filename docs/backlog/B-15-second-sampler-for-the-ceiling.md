@@ -1,7 +1,7 @@
 ---
 id: B-15
 title: "Cross-check the ceiling with razves's sampler, as a second implementation"
-status: wip
+status: question
 priority: P2
 size: M
 stage: stage-1-ceiling
@@ -44,3 +44,68 @@ example) and what the ring could not hold, which is the reconciliation
   ([B-04](B-04-fork-at-the-pinned-tag-and-the-baseline.md)).
 - Anchors: `logs/b-15/`, `razves/README.md`, `pgo-native-spike/scripts/attribution.py`,
   `xyk/server/build.gradle.kts`.
+
+## Iteration 1 — 2026-09-21. Blocked by the subject, not by the tooling
+
+Everything the item needs works except the one thing it exists for. Full evidence in
+`logs/b-15/`.
+
+**Established:**
+
+- **AC (reachability) — the precondition named the wrong host.** It required IPv6 "because that
+  host has no IPv4 route"; that is the **bench** pair (B-04). Builds run on the WSL box, which
+  reaches `reposilite.kotlin.website` over IPv4. Third stated blocker in this study that cost
+  nothing once looked at.
+- `io.github.youndie.razves:sampler:0.1.0.33` resolves from reposilite **snapshots**, which xyk
+  already declares. Not on Central, not on `releases`, and razves's README quotes `0.1.0.28`,
+  which is published nowhere.
+- The sampler links and works: an arithmetic probe gave 114 samples, 0 dropped, 100 % of leaves
+  named, `BY ORIGIN` = `kotlin 100 %` — razves's own positive control, on a program whose answer
+  is known.
+- **AC (rebuild) — met.** The patched subject builds at the full pin and **the sampler costs
+  22 160 bytes**: 20 191 608 against 20 169 448. The patch is `patches/razves-sampler.py` and
+  applies to a copy; it is scaffolding, so unlike B-19 it is not offered to xyk.
+
+**The wall: the sampler kills the subject.** Its timer signal interrupts Ktor's CIO selector in
+`pselect`, and **Ktor's native selector does not retry on `EINTR`** — it throws, uncaught, and the
+process dies. Same binary, same load, sampler the only difference:
+
+| arm | survived | `EINTR` |
+|---|---|---:|
+| off | **yes** | 0 |
+| 997 Hz | **no** | 1 |
+| 97 Hz × 3 runs of 60 s | **no, yes, no** | 1, 0, 1 |
+
+The one 30-second survival at 97 Hz that suggested a lower rate might work was a single run of a
+single variant. Three longer runs killed it twice.
+
+**This is not razves's defect.** A `pselect` caller that does not handle `EINTR` is broken for any
+process that receives signals at all. razves makes it frequent enough to observe. The transferable
+form: **no in-process signal-based profiler can run against Ktor CIO on Kotlin/Native** until that
+loop retries, which is also why `perf` — out-of-process, delivering no signals — remains the only
+instrument that can answer RQ1 on this subject.
+
+**Nothing published changes.** RQ1's numbers stand; what is missing is the independent check on
+them, so the results document's caveat stays true and is now known to be expensive to remove.
+
+## Question — for a person, 2026-09-21
+
+**The second implementation cannot be had on this subject by this route.** Which of these is
+worth doing is a judgement about the study's remaining value, not something this loop should
+decide:
+
+1. **Drop the cross-check.** RQ1 keeps its caveat, stated plainly: one sampler, one grammar, both
+   written here. Cheapest, and the study's conclusions do not rest on RQ1 being exact — A2.3
+   dropped the macro arms on a margin of eleven points.
+2. **Fix the `EINTR` retry.** The defect is in Ktor's native selector loop, which is upstream and
+   outside this brief's non-goals only if somebody decides it is. A retry is a small change, and
+   it would unblock every in-process profiler on Kotlin/Native, not just this one — which may be
+   worth more than this study's cross-check.
+3. **Cross-check on a different subject.** Run razves and `perf` against the RQ2 microbenchmark,
+   which has no selector and no signals problem. It checks the *grammar* against an independent
+   reader, which is most of the value, but not on the binary RQ1 is about.
+4. **Record it in razves** as a known limitation — that it cannot profile a Ktor CIO service on
+   Native, and why. razves is our own, and the next person to try this deserves the sentence.
+
+Option 3 is the one that recovers most of the item's value for least effort, and option 4 is
+nearly free; they are not exclusive. Option 2 is the one with value beyond this repository.
