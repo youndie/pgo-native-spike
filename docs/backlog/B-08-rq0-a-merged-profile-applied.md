@@ -1,7 +1,7 @@
 ---
 id: B-08
 title: "RQ0 — a profile that merges and applies, by Route B then Route A"
-status: open
+status: wip
 priority: P0
 size: XL
 stage: stage-2-feasibility
