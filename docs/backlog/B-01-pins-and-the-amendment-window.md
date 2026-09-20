@@ -1,7 +1,7 @@
 ---
 id: B-01
 title: "Pin every row of the fixed setup, and close the amendment window"
-status: open
+status: wip
 priority: P0
 size: S
 stage: stage-0-stand
