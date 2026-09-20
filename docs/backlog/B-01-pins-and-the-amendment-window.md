@@ -113,6 +113,29 @@ True as it now stands, and it was not true when this item opened. A1.1, A1.2 and
 RQ1's arithmetic: A1.1 changes an instrument, A1.2 a host protocol, A1.4 moves `sqlx4k`'s Rust
 between two buckets neither of which is the Kotlin one. A1.3 and A1.5 did, and are fixed above.
 
+### The Hosts row, filled in the same run (2026-09-20)
+
+The owner supplied the two ssh destinations while this item was open, so the row stops being a
+description of two machines and becomes their names. Probed, not assumed:
+
+| | `bench-a` (SUBJECT) | `bench-b` (GENERATOR) |
+|---|---|---|
+| cores | 4 | 4 |
+| kernel | `7.0.0-30-generic` | `7.0.0-30-generic` |
+| `perf` | binary present, reports `perf version 7.0.14` | absent, and does not need it |
+
+**`perf` being present is not `perf` working, and this row does not claim it is.** A version string
+says the binary exists and matches the kernel major — which is already more than the portfolio's
+other Linux host manages, where `perf` is a stub built for a different kernel. Whether
+`perf record -e cpu-clock` can actually record inside this VM depends on `perf_event_paranoid` and
+on what the hypervisor exposes, and that is [B-02](B-02-can-the-subject-host-be-profiled.md)'s
+whole question. Nothing here shortens it.
+
+**Both hosts have four cores, which is the regime the study should be most nervous about.** It is
+where xyk's Kotlin arm showed a 2.3× round-to-round spread against the Go twin's 1.02×
+([research §1.8](../research/research-architecture.md)), and the ruler is measured on exactly this
+pair. It makes [B-03](B-03-the-ruler.md) more likely to trip kill criterion 4, not less.
+
 ### Not covered
 
 The amendment window is declared closed as of the first measurement, not as of this item — nothing

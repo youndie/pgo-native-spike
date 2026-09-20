@@ -22,7 +22,7 @@ re-resolved afterwards:
 | LLVM bundled by that release | **21**, distribution `llvm-21-x86_64-linux-dev-116` | `konan.properties` of the 2.4.20 toolchain |
 | Macro subject | **xyk** — Kotlin/Native, Ktor CIO, sqlx4k/SQLite in process | owner's choice, 2026-09-20; it is the only portfolio subject that already has the two-host stand |
 | Subject build options | **`-Pxyk.httpClient=false -Pxyk.outbound=real -Pxyk.staticLink=true -Pxyk.allocator=paged-off`** — the ingest-only, statically linked, paged-off build | `xyk/server/build.gradle.kts` lines 28–44 name all four axes and their defaults; this is the arm xyk's own two-host measurement was taken on, so the ruler priors describe the same binary |
-| Hosts | xyk's pair: the subject host (4-core, 7 GB cloud VM, Ubuntu, glibc 2.43) and the generator host (4 cpu, k6, private network) | see amendment A1.2 |
+| Hosts | xyk's pair, as ssh destinations: **`SUBJECT=bench-a`**, **`GENERATOR=bench-b`** — both 4 cores, kernel `7.0.0-30-generic` | supplied by the owner 2026-09-20 and probed the same day; `xyk/bench/` takes these two names and refuses to take a number on one host. See amendment A1.2 |
 | Ktor / coroutines | 3.5.2 / 1.11.0 | the same catalog |
 
 **Provenance of the text below.** The brief as received is `sha256
