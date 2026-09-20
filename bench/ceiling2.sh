@@ -78,10 +78,10 @@ sweep() {
   knee_set "$name" "$prev"
   echo "  (no knee found up to $prev - the ladder is too short, and that is a result)"
 }
-sweep health    control "/health/live"     400 800 1600 2400 3200
-sweep ingest    ingest  "/hooks/$ENDPOINT" 100 200 300 400
-sweep apievents control "/api/events"      100 200 300 400
-sweep journal   control "/journal"          20  40  60  80
+sweep health    control "/health/live"     800 1600 2400 3200 4000 4800
+sweep ingest    ingest  "/hooks/$ENDPOINT" 200 300 400 500 600 800
+sweep apievents control "/api/events"      200 300 400 500 600 800
+sweep journal   control "/journal"          40  60  80 120 160 240
 
 measure() {
   local name=$1 arm=$2 path=$3

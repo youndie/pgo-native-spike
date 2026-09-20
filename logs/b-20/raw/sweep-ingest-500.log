@@ -1,0 +1,43 @@
+time="2026-09-20T19:11:39Z" level=warning msg="Insufficient VUs, reached 200 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=ingest
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✗ 'p(99)<250' p(99)=598.82ms
+
+      {expected_response:true}
+      ✗ 'avg<100' avg=458.02ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 6229    403.355427/s
+    checks_succeeded...: 100.00% 6229 out of 6229
+    checks_failed......: 0.00%   0 out of 6229
+
+    ✓ accepted
+
+    HTTP
+    http_req_duration..............: avg=458.02ms p(50)=474.27ms p(95)=580.4ms  p(99)=598.82ms max=651.22ms
+      { expected_response:true }...: avg=458.02ms p(50)=474.27ms p(95)=580.4ms  p(99)=598.82ms max=651.22ms
+    http_req_failed................: 0.00%  0 out of 6229
+    http_reqs......................: 6229   403.355427/s
+
+    EXECUTION
+    dropped_iterations.............: 1272   82.367652/s
+    iteration_duration.............: avg=458.25ms p(50)=474.46ms p(95)=580.67ms p(99)=599.02ms max=651.51ms
+    iterations.....................: 6229   403.355427/s
+    vus............................: 199    min=110       max=200
+    vus_max........................: 200    min=200       max=200
+
+    NETWORK
+    data_received..................: 716 kB 46 kB/s
+    data_sent......................: 1.7 MB 111 kB/s
+
+
+
+time="2026-09-20T19:11:53Z" level=error msg="thresholds on metrics 'http_req_duration, http_req_duration{expected_response:true}' have been crossed"

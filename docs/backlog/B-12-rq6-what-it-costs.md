@@ -1,7 +1,7 @@
 ---
 id: B-12
 title: "RQ6 — what it costs: binary size per owner, build time, A1's overhead"
-status: open
+status: dropped
 priority: P2
 size: S
 stage: stage-5-cost
@@ -41,3 +41,20 @@ a question nobody asked.
   delta between a binary and itself is reporting on its own reproducibility, which is
   [B-05](B-05-six-unknowns-of-the-release-pipeline.md)'s finding and not RQ6's.
 - Anchors: `logs/b-12/`, `razves/README.md`, `xyk/server/build.gradle.kts`.
+
+---
+
+## Dropped — 2026-09-20, by the rule that was declared before the measurement
+
+[BRIEF](../../BRIEF.md) A2.3: *"if Kotlin self plus runtime stays under 40 % on every work
+endpoint, Route A, RQ5 and RQ6 are dropped."*
+[B-20](B-20-ceiling-on-the-paged-allocator.md) measured **28.4–28.6 % on all three**, on the
+allocator build that was the last plausible way for the number to come out higher.
+
+RQ6 is therefore dropped, not deferred. The rule was written down before the run it decides and
+its answer on the then-available data was recorded beside it, so this is the rule working rather
+than a conclusion looking for one.
+
+**What would re-open it:** a subject whose Kotlin plus runtime share is materially higher, or a
+PGO effect large enough to matter at 28 %. The per-call bound in the results document says the
+second is not this mechanism.
