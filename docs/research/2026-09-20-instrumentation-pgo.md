@@ -53,7 +53,24 @@ the thread, so resident memory follows thread count rather than live heap. **The
 of ingest throughput and buys the memory criterion** — and that 13 % is already larger than any
 effect this study measured for PGO.
 
-**So the cheap experiment is running**: A0 against A0 with the allocator as the only difference,
+### The experiment has now run, and it is the largest effect in this study
+
+| arm | µs CPU per request |
+|---|---:|
+| `pagedAllocator=false` — the pin | **8 175** |
+| `pagedAllocator=true` — the default | **6 756** |
+| paired, eight counted rounds | **+19.01 %**, 95 % CI **±2.33 %** |
+
+**Nineteen percent of request CPU, from one build flag, with no compiler work** — against a macro
+threshold of 5 % and a best-case PGO effect of 11–13 % measured on a microbenchmark whose
+per-call bound says it is worth almost nothing at service scale.
+
+It does not follow that the product should flip it: that setting is what survives a 64 MiB limit
+10 times in 10 against paged's 1 in 10, and this run had no container limit. **The honest form is
+that the memory criterion costs this service a fifth of its request CPU** — previously priced by
+the subject at 13 % of ingest throughput, and now measured larger on the CPU axis.
+
+**The original wording**: A0 against A0 with the allocator as the only difference,
 eight counted rounds, no toolchain work
 ([B-18](../backlog/B-18-allocator-probe.md)). **RQ1 should be re-measured on a paged-allocator
 build before anyone concludes the macro half has no room**
