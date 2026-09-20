@@ -44,7 +44,6 @@ an item proposing either does not belong in this file.
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-01](docs/backlog/B-01-pins-and-the-amendment-window.md) `[~]` | Pin every row of the fixed setup, and close the amendment window | P0 | S | - |
 | [B-02](docs/backlog/B-02-can-the-subject-host-be-profiled.md) `[ ]` | Can the subject host be profiled at all — perf, or nothing | P0 | XS | - |
 | [B-03](docs/backlog/B-03-the-ruler.md) `[ ]` | The ruler: A0 against itself, in µs CPU per request, on the two-host stand | P0 | M | B-01 |
 | [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[ ]` | Build the fork at v2.4.20, and prove it is a valid baseline | P0 | L | B-01 |
@@ -57,8 +56,13 @@ an item proposing either does not belong in this file.
 | [B-05](docs/backlog/B-05-six-unknowns-of-the-release-pipeline.md) `[ ]` | Answer the six believed-and-unchecked items against the fork's source | P1 | M | B-04 |
 | [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10 |
 | [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08 |
+| [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 
-## Closed (0)
+## Closed (1)
+
+**The stand, before any compiler work**
+
+- [B-01](docs/backlog/B-01-pins-and-the-amendment-window.md) `[x]` - Pin every row of the fixed setup, and close the amendment window
 
 <!-- END INDEX -->
 

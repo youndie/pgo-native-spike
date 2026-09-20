@@ -232,14 +232,34 @@ are printed beside every table it produces, rather than folded away.
 
 | Fact | Where verified |
 |---|---|
-| xyk's release build selects an allocator through `-Pxyk.allocator`, defaulting to **`paged-off`** (`-Xbinary=pagedAllocator=false`), with `std`, `fixed16` and `default` as the other arms | `xyk/server/build.gradle.kts`, lines 33–44 and 139–162 |
+| xyk's release build has **four** measurement axes as Gradle properties, not two: `xyk.httpClient` (default `false`), `xyk.staticLink` (default `false`), `xyk.allocator` (default `paged-off`), `xyk.outbound` (default `real`) | `xyk/server/build.gradle.kts`, lines 28–44 |
+| `paged-off` is `-Xbinary=pagedAllocator=false`; the other arms are `std` (the deprecated spelling of the same allocator), `fixed16` and `default` | same file, lines 139–162 |
+| `xyk.httpClient=false` removes the outbound engine, and with it the delivery workers — the build xyk calls **ingest-only** | same file, and `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
+| The arm xyk's own two-host measurement was taken on was the ingest-only build, **statically linked** — which is not the build's default for either axis | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
 | The choice was made on measurements recorded in that file — survival under a memory limit and rps, per allocator — and `-Xallocator=std` is deprecated with the compiler naming its replacement | same file, the comment block at lines 110–160 |
 | RSS on Kotlin/Native follows thread count rather than live heap: the allocator holds a page per size class **per thread**, 256 kB by default | `zavarnik`-era measurement recorded in `kafka-native-spike/docs/research/research-architecture.md` §1.4 |
 
-**Consequence.** The allocator moves the runtime's share of CPU, which is exactly RQ1's
+**Consequence 1.** The allocator moves the runtime's share of CPU, which is exactly RQ1's
 denominator, and it moves binary size, which is RQ6's number. Every arm — A0 through A4 — carries
 the same options, the results name them, and a verdict is stated for that configuration rather
 than for "xyk".
+
+**Consequence 2 — the pin follows the stand, not the build's defaults.** Two of the four defaults
+differ from the arm xyk measured, and a pin taken from the defaults would mean none of §1.4's and
+§1.5's priors — the generator ceiling, the round-to-round spread — describe the binary this study
+runs. The pin is therefore `httpClient=false outbound=real staticLink=true allocator=paged-off`,
+recorded in [BRIEF.md](../../BRIEF.md).
+
+**Consequence 3 — and that pin excludes the delivery half of the product, which is a threat to
+validity and not a detail.** Indirect call promotion is the mechanism the whole study rests on,
+and the delivery path — workers, retries, per-attempt timeouts, timers — is where a service of
+this shape keeps most of its polymorphic dispatch. Measuring ingest-only may therefore
+**understate** what PGO is worth on this service. The reasons it is still the pin: the stand's
+priors describe that binary, background delivery work would sit in one arm's profile and not
+another's if any arm crashed a worker, and the shipping build carries a known outbound leak of
+about 2 kB per request that drifts anything longer than a short round. **This is the one
+judgement in the pins table that a reader may reasonably want reversed**, it is reversible until
+the first measurement, and the write-up states the verdict as being about the ingest path.
 
 ---
 

@@ -18,12 +18,20 @@ re-resolved afterwards:
 | Row | Pin | Where it came from |
 |---|---|---|
 | Kotlin release the stand carries | **2.4.20** | sborka `0.4.0.86`'s published `wip` catalog, which is where the subject takes its compiler |
-| Fork tag | `JetBrains/kotlin` at **`v2.4.20`** | the row above |
+| Fork tag | `JetBrains/kotlin` at **`v2.4.20`** | follows from the row above; the tag exists upstream and is checked out in [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) |
 | LLVM bundled by that release | **21**, distribution `llvm-21-x86_64-linux-dev-116` | `konan.properties` of the 2.4.20 toolchain |
 | Macro subject | **xyk** — Kotlin/Native, Ktor CIO, sqlx4k/SQLite in process | owner's choice, 2026-09-20; it is the only portfolio subject that already has the two-host stand |
-| Subject build options | xyk's shipping release build: `-Pxyk.allocator=paged-off`, the repository's default static-link setting | they move the runtime's share of CPU, which is RQ1's denominator |
+| Subject build options | **`-Pxyk.httpClient=false -Pxyk.outbound=real -Pxyk.staticLink=true -Pxyk.allocator=paged-off`** — the ingest-only, statically linked, paged-off build | `xyk/server/build.gradle.kts` lines 28–44 name all four axes and their defaults; this is the arm xyk's own two-host measurement was taken on, so the ruler priors describe the same binary |
 | Hosts | xyk's pair: the subject host (4-core, 7 GB cloud VM, Ubuntu, glibc 2.43) and the generator host (4 cpu, k6, private network) | see amendment A1.2 |
 | Ktor / coroutines | 3.5.2 / 1.11.0 | the same catalog |
+
+**Provenance of the text below.** The brief as received is `sha256
+77d8480c45cba5eae46d7f46f7006a23fe336492bb43a54f7902c87608859a77`, 18 849 bytes. Restoring the
+embedded copy — undoing the heading demotion and nothing else — reproduces that digest exactly;
+verified 2026-09-20 by [B-01](docs/backlog/B-01-pins-and-the-amendment-window.md). The digest is
+recorded because the received file lives outside this repository, so the check is reproducible
+only by someone who still holds it; making it checkable from the repository alone is
+[B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md).
 
 ## Amendments
 
@@ -62,6 +70,12 @@ same as measured. The bucket is `^_?k[a-z]+:`, the twelve prefixes are enumerate
 with their sample counts, and if the eleven beyond `kfun:` carry under 1 % of samples the results
 say so and the distinction stops mattering *with a number behind it*.
 
+**This widening can only enlarge the Kotlin bucket, which moves RQ1 towards green, so it is not
+allowed to stand alone.** The `kfun:`-only share is published beside the widened one, and RQ1's
+verdict is stated against both. A reader who prefers the brief's literal rule gets its verdict
+without recomputing anything, which is what stops a corrected definition from doing a threshold's
+work.
+
 ### A1.4 — the Runtime bucket is defined by owning module, not by mangling
 
 The brief's table separates "Kotlin/Native C++ runtime symbols" from "libc and other native". On
@@ -78,8 +92,13 @@ RQ1's instrument is `perf record -e cpu-clock`. On the portfolio's other Linux h
 stub not built for that kernel and `/proc/*/schedstat` returns zeros; whether the cloud subject
 host differs is unverified and is the first thing checked. If it cannot run, the kernel row is
 reported as **not measured**, RQ1's thresholds are applied to the stated user-mode denominator, and
-the write-up carries that qualification next to every RQ1 number. A gate whose instrument is
-missing is not allowed to read as a pass.
+the write-up carries that qualification next to every RQ1 number.
+
+**And a missing kernel row inflates the Kotlin share**, because it leaves the denominator: on a
+profile where the kernel is a third of samples, dropping it multiplies every other bucket by
+about 1.5. So with the kernel row missing **RQ1 cannot be reported green — grey at best**, and the
+results say which condition it missed. A gate whose instrument is missing is not allowed to read
+as a pass, and that includes reading as a pass by arithmetic.
 
 ---
 
