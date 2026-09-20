@@ -16,11 +16,12 @@ hosts.
 
 ## Coverage map
 
-### Research (1)
+### Research (2)
 
+- [2026-09-20-instrumentation-pgo](research/2026-09-20-instrumentation-pgo.md) — **the deliverable.** Verdicts per research question against the pre-registered thresholds, what was not measured and why, the claims withdrawn during the work, and where the CPU actually goes.
 - [research-architecture](research/research-architecture.md) — the compiler and LLVM pins and how they were resolved, the macro unit and the instrument that overstates it, the ruler as the study's binding constraint, why the portfolio's ceiling number is not RQ1's prior, the attribution grammar, and the risks with the machinery that mitigates each.
 
-**Not yet written.** The results document — `research/<date>-instrumentation-pgo.md`, the verdict
-table with its raw output — is [B-13](backlog/B-13-publish-the-result.md)'s deliverable and does
-not exist until there is something to put in it. An empty file with the right name would begin
-lying by existing.
+The results document is **interim**: five of seven research questions have verdicts, and the
+macro half is reported as not measured rather than estimated.
+[B-13](backlog/B-13-publish-the-result.md) closes it when the study ends, whichever way that
+happens.
