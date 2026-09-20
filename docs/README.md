@@ -16,12 +16,14 @@ hosts.
 
 ## Coverage map
 
-### Research (2)
+### Research (3)
 
 - [2026-09-20-instrumentation-pgo](research/2026-09-20-instrumentation-pgo.md) — **the deliverable.** Verdicts per research question against the pre-registered thresholds, what was not measured and why, the claims withdrawn during the work, and where the CPU actually goes.
 - [research-architecture](research/research-architecture.md) — the compiler and LLVM pins and how they were resolved, the macro unit and the instrument that overstates it, the ruler as the study's binding constraint, why the portfolio's ceiling number is not RQ1's prior, the attribution grammar, and the risks with the machinery that mitigates each.
+- [source-brief](research/source-brief.md) — **the frozen text**, as it arrived on 2026-09-20 and byte for byte: the only copy in this repository, hashed by `make check` so that "unedited" is a claim the repository can support on its own. What the study *decided* is [BRIEF.md](../BRIEF.md); which of this brief's premises survived is the research and results documents.
 
 The results document is **interim**: five of seven research questions have verdicts, and the
 macro half is reported as not measured rather than estimated.
 [B-13](backlog/B-13-publish-the-result.md) closes it when the study ends, whichever way that
 happens.
+

@@ -22,11 +22,13 @@ gate: controls
 	$(PY) scripts/docs_check.py
 	$(PY) scripts/coverage_map.py --check
 
-# Every reader whose output became a number in the results document, run against inputs whose
-# answer is known. These existed before they were wired in here, which is its own lesson: a
+# The freeze, and every reader whose output became a number in the results document, run against
+# inputs whose answer is known. These existed before they were wired in here, which is its own lesson: a
 # control that nothing runs is indistinguishable from one that does not exist, and both of these
 # had already caught a defect in the reader they guard.
 controls:
+	$(PY) scripts/brief_freeze.py
+	$(PY) scripts/brief_freeze.py --control
 	$(PY) scripts/attribution_control.py
 	$(PY) scripts/profile_applied.py --control
 
