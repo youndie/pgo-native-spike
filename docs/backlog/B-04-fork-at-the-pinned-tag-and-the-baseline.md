@@ -1,7 +1,7 @@
 ---
 id: B-04
 title: "Build the fork at v2.4.20, and prove it is a valid baseline"
-status: wip
+status: question
 priority: P0
 size: L
 stage: stage-0-stand
@@ -139,3 +139,23 @@ still.
 
 Nothing was built. The clone is not on disk; `/root/kotlin-fork` was removed by the failed clone
 and nothing else on either host was changed.
+
+---
+
+## The question — 2026-09-20
+
+**Which machine builds the fork?** The item is `question` rather than `wip` because no amount of
+further effort here resolves it, and because the answer moves a variable kill criterion 2 exists
+to hold still.
+
+| Option | What it costs | What it buys |
+|---|---|---|
+| **Open egress on `bench-a`** for `github.com` and `cache-redirector.jetbrains.com` | a hole in an allow-list on the measurement host, and four cores means hours per build | the fork-built compiler and the stock baseline share a host, a glibc and a sysroot with every number already taken |
+| **Free the WSL box** — establish the three Gradle daemons are nobody's, stop them | 20 cores and 634 GB, but the baseline is then built against glibc 2.39 and measured on glibc 2.43 | much faster builds, no firewall change |
+| **A third machine** | provisioning | neither of the above |
+
+Not a real option: the Mac. 41 GB of disk against a Kotlin source build, and the portfolio's own
+rule is that it is a draft editor rather than a build stand.
+
+**The loop does not wait for this.** [B-06](B-06-attribution-grammar-before-the-ceiling.md) is
+unblocked, needs neither the fork nor a build host, and is the next thing picked.
