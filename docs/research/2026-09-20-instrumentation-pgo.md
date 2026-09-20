@@ -419,8 +419,24 @@ outside and delivers no signals, remains the only instrument that can answer RQ1
 
 Everything short of the run works: the sampler resolves, links, and profiles an arithmetic
 control at `kotlin 100 %`, and the subject rebuilt with it costs **22 160 bytes** more than the
-pin. **No published number changes**; what is missing is the check on them, and the caveat stands
-with a price attached.
+pin.
+
+**So the cross-check was run where it can be — on the microbenchmark**, both samplers on one run,
+and it confirms the grammar. Kotlin self: perf 87.71 %, razves 93.2 %; the gap is the kernel,
+which an in-process sampler cannot see. Removing perf's 155 kernel samples puts Kotlin self
+between **92.15 %** and **93.33 %** depending on where its 36 unresolved samples belong, and
+**razves's 93.26 % lands inside that band, 0.07 points from the edge**, with 0 dropped samples
+and 99.7 % of leaves named.
+
+**The one disagreement is a definition, and naming it is what a second implementation buys.** The
+disputed bucket is a single symbol — `Kotlin_String_equals`, 162 of 166 samples. razves decides
+"runtime" from C++ Itanium mangling, so the runtime's **C entry points** fall to `c`;
+`attribution.py` counts them as runtime. Neither is wrong, the boundary is a choice rather than a
+fact, and the arithmetic closes exactly: razves's `c` 202 = perf's libc 38 + 162 + 2 C++ leaves.
+
+**No published number changes.** RQ1's own buckets are still read by one sampler on the service,
+because razves cannot run there at all; what is now independently checked is the **grammar** they
+are read with, which is the part both subjects share.
 
 ## Open questions
 

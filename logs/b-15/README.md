@@ -73,3 +73,69 @@ the results document — one sampler, one grammar, both written here — stays t
 to be expensive to remove rather than merely not yet done.
 
 Raw: `2026-09-21-sampler-eintr.log`.
+
+---
+
+# The cross-check, run on the microbenchmark (owner's decision, 2026-09-21)
+
+One run of `probes/dispatch-bench.kt`, **both samplers at once** — razves armed in-process at
+997 Hz and `perf -F 997 -e cpu-clock --call-graph fp` on the same process — so the workload is
+identical by construction rather than by matching two runs.
+
+    perf:    3 213 samples
+    razves:  3 101 samples, 0 dropped, 99.7 % of leaves named
+
+| bucket | perf + `attribution.py` | razves `BY ORIGIN` |
+|---|---:|---:|
+| Kotlin self | 2 818 — 87.71 % | 2 892 — 93.2 % |
+| runtime (C++ `kotlin::`/`konan::`) | 166 — 5.17 % | 0 self, 6 total |
+| kernel | 155 — 4.82 % | **not visible by construction** |
+| C / libc | 38 — 1.18 % | 202 — 6.5 % |
+| unresolved / outside | 36 — 1.12 % | 7 — 0.2 % |
+
+## The disagreement, chased to a named symbol
+
+The AC required this before either number is used, and the gap is larger than the unnamed
+fraction, so it had to be.
+
+**It is one symbol: `Kotlin_String_equals`, 162 of the 166 samples in the disputed bucket.**
+
+razves decides `KOTLIN_RUNTIME` from **C++ Itanium mangling** — `Mangling.kt` takes the first
+nested namespace of a `_ZN…` symbol and asks whether it is `kotlin` or `konan`. A plain C symbol
+has no such mangling, so the runtime's **C entry points** cannot reach that rule and fall to `c`.
+`attribution.py` puts them in `runtime`, and has a control case saying so.
+
+**Neither is wrong.** They draw the same boundary in two defensible places: razves by C++
+namespace, `attribution.py` by the runtime's whole ABI surface including its C entry points.
+
+**And the arithmetic closes exactly:**
+
+    razves `c` 202  =  perf libc 38  +  Kotlin_String_equals 162  +  2 C++ leaves
+                    =  202                                     difference 0
+
+## Where they agree
+
+Once the kernel — which an in-process sampler cannot see at all — is out of the denominator,
+perf's own rows permit a band for Kotlin self, depending on where its 36 unresolved samples
+belong:
+
+| | Kotlin self |
+|---|---:|
+| perf, unresolved all **non**-Kotlin | 92.15 % |
+| perf, unresolved all Kotlin | 93.33 % |
+| **razves** | **93.26 %** |
+
+**razves lands inside the band, 0.07 points from its nearer edge** — and it names 99.7 % of its
+leaves, so it has almost no unresolved fraction of its own to hide in.
+
+## What this does and does not establish
+
+**Does:** the attribution grammar is confirmed by an independent sampler and an independent
+symbol reader, on the same run, with the single disagreement explained down to one symbol and a
+definition. Two implementations found what one could not — the `Kotlin_*` C-entry-point boundary
+is a *choice*, not a fact, and only a second reader drawing it elsewhere makes that visible.
+
+**Does not:** this is `dispatch-bench`, not the service. **RQ1's own buckets are still measured
+by one implementation**, because the sampler cannot run against a Ktor CIO process at all — see
+above. What is checked here is the grammar those buckets are read with, which is the part both
+subjects share.
