@@ -1,7 +1,7 @@
 ---
 id: B-16
 title: "Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a"
-status: wip
+status: done
 priority: P0
 size: M
 stage: stage-0-stand
@@ -121,3 +121,93 @@ worked around:
 **Not yet done:** the GC-logging build. `-Xruntime-logs=gc=info` is a `freeCompilerArgs` entry and
 xyk's build exposes no property for it, so it needs a one-line change in **xyk**, not here. That
 is a cross-repo change and is raised rather than slipped in.
+
+---
+
+## Findings — 2026-09-20
+
+**Done.** Off-host builds work, the recipe is
+[`bench/build-arm.sh`](../../bench/build-arm.sh), and **A0 is re-pinned to xyk at
+`c4ba99f41d62bdeb8a28377d0456c4d4c9a1bf2a`, built on the WSL box.** The binary every earlier
+number was taken on is retired.
+
+### The build
+
+| | |
+|---|---|
+| host | the WSL box — 20 cores, 12 of 15 GB free, full egress |
+| command | `linkReleaseExecutableNative` with the four pinned properties |
+| the build's own echo | `xyk build: httpClient=false outbound=real staticLink=true allocator=paged-off` |
+| compiler | Kotlin **2.4.20**, confirmed by the resolved sborka catalog on the builder being the identical file (same cache SHA) as the Mac's |
+| time | 1 m 32 s |
+| result | static (`not a dynamic executable`), zero `curl_easy` symbols, 6 356 `kfun:` FUNC symbols, runs on `bench-a` and answers `/health/ready` |
+
+### The comparison, and it does **not** land within the ruler
+
+Eight counted rounds (A2.1), 120 s settle, arms interleaved, every round `clean` on the
+contamination guard and zero dropped:
+
+| | µs CPU/request |
+|---|---:|
+| `xyk-pagedoff` — the retired binary | **7 875** |
+| `xyk-a0-c4ba99f` — the new A0 | **7 588** |
+| paired difference | **+3.71 %**, 95 % CI **±3.20 %** |
+
+**Distinguishable, and the new binary is the cheaper one** — by 3.71 % against an interval of
+3.20 %, so it clears by half a point. Marginal, and this run's per-round sd is 3.82 % against the
+pooled ruler's 2.92 %, so it is noisier than the ruler it is judged by; the interval is computed
+from this run's own spread rather than the pooled one, so the verdict stands on its own data.
+
+**The AC as written is not met, and it could not have been.** "Lands within the ruler" assumes
+the two binaries differ only in build host. They differ in build host **and** source revision,
+and because `bench-a` cannot build, no run can separate them. The 3.71 % is reported as the sum
+of the two and attributed to neither.
+
+**What matters more than the verdict: the offset cancels.** Every arm from here — A0, A2, A3, A4
+— is built on the same host from the same commit by the same script, so the 3.71 % is a constant
+that leaves every comparison this study will make. It only invalidates comparisons with the
+*old* numbers.
+
+### The binary is 76 % larger and costs less CPU
+
+11 475 544 → 20 169 472 bytes, and 31 639 → 53 689 symbol-table entries. The striking part is the
+binding split: **GLOBAL symbols 840 → 10 884**, thirteen-fold, while Kotlin functions barely moved
+(6 085 → 6 356) and `_ZN` (312) and `_R` (1 323) are unchanged. So it is neither Kotlin code nor
+the C++ runtime nor the Rust.
+
+**The cause is not established.** It is not the compiler version, which is identical. It is not
+debug info, which neither binary has. It is not the curl dependency, which neither carries. The
+remaining candidates are the two days of source between the binaries and something in how the
+retired binary was linked or post-processed, and they cannot be told apart without building the
+old source, which no longer exists.
+
+**The consequence is worth more than the cause**: on this subject **binary size and CPU per
+request are not coupled** — 76 % more bytes cost 3.7 % *less* CPU. RQ6 measures size and RQ3
+measures CPU, and this says plainly that neither predicts the other.
+
+### What this invalidates, and what survives
+
+- **[B-07](B-07-rq1-the-ceiling.md)'s ceiling does not transfer.** Those shares are a property of
+  the retired binary. [B-17](B-17-rq1-second-point.md) re-takes them on the new A0, which it was
+  going to do anyway for a different reason.
+- **[B-03](B-03-the-ruler.md)'s ruler survives, with a caveat.** It is a property of the stand,
+  measured as one binary against itself, and this run's per-round sd of 3.82 % is close enough to
+  the pooled 2.92 % to keep using the pooled figure — but the two arms here are different
+  binaries, which is itself a reason the spread could be larger, so B-17 should re-confirm it on
+  the new A0 as a self-comparison.
+
+### A defect I introduced and then documented, in that order
+
+The first version of the recipe **reproduced the exact provenance failure this item had just
+written up**: the rsync excludes `.git`, so the new binary also reports `commit: unknown`. It is
+worked around with a `SOURCE_COMMIT` file beside the tree and a dirty-tree refusal in the script,
+which is weaker than the binary knowing its own provenance. Fixing it properly is a change in
+**xyk** and is [B-19](B-19-stamp-the-commit-into-the-binary.md).
+
+### Not covered
+
+- **The GC-logging build.** `-Xruntime-logs=gc=info` is a `freeCompilerArgs` entry and xyk's
+  build exposes no property for it. Also [B-19](B-19-stamp-the-commit-into-the-binary.md); the
+  script already accepts the extra argument for when it lands.
+- **The fork.** Still [B-04](B-04-fork-at-the-pinned-tag-and-the-baseline.md), and the builder
+  can reach `github.com`, so the host half of that question is now answered.
