@@ -1,7 +1,7 @@
 ---
 id: B-21
 title: "RQ0's two missing numbers, and the macro subject its green requires"
-status: open
+status: wip
 priority: P1
 size: M
 stage: stage-2-feasibility

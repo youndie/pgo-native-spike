@@ -44,7 +44,7 @@ an item proposing either does not belong in this file.
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-21](docs/backlog/B-21-rq0-the-two-numbers.md) `[ ]` | RQ0's two missing numbers, and the macro subject its green requires | P1 | M | B-22 |
+| [B-21](docs/backlog/B-21-rq0-the-two-numbers.md) `[~]` | RQ0's two missing numbers, and the macro subject its green requires | P1 | M | B-22 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 | [B-18](docs/backlog/B-18-allocator-probe.md) `[ ]` | The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts | P2 | S | B-17 |
