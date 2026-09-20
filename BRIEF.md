@@ -208,6 +208,29 @@ Route B applies the profile with an external `opt`, which takes the path on its 
 and A2.4 already made Route B the only route this study takes. If Route B proves unusable, Route
 A and the fork both return.
 
+### A3.2 — that last clause has half fired: Route B's **use** arm is unusable on a service
+
+Recorded 2026-09-20 after [B-22](docs/backlog/B-22-replay-the-linker-command.md), and it
+qualifies A3.1 rather than reversing it. A3.1 is correct that the stock compiler exposes every
+flag the mechanism needs, and RQ0 and RQ2 were both carried on stock tools with no fork. But
+Route B has two arms and only one of them survives contact with a real module:
+
+- **Instrument and train: stock is enough.** Instrumented bitcode carries no profile metadata,
+  kotlinc runs its own pipeline on it, and replaying the printed link command produces a training
+  binary that writes an IR-level profile.
+- **Apply: stock is not enough.** A module carrying profile metadata makes kotlinc emit the
+  `CG Profile` module flag twice — from its LTO pipeline and from its `clang++` codegen step —
+  and reject its own module. Neither copy comes from the input. The only `-Xllvm-lto-passes`
+  value that avoids the collision does no LTO, and Kotlin/Native's LTO internalises and
+  dead-strips 3 027 defines to 411, which no external `default<O3>` reproduces.
+
+**What this does to the record.** Kill criterion 2 stays untested — there is still no fork, and
+none was built. But *"the fork is not needed"* was too broad: it is not needed to instrument,
+train, merge or apply-to-a-module, and it **is** the plausible fix for the one step that stops a
+service arm. That is a finding about the toolchain and it goes in the results document; **it does
+not restart Route A**, which A2.3 dropped on a bucket measurement that has nothing to do with
+this and would be unaffected if the wall vanished tomorrow.
+
 ---
 
 ---

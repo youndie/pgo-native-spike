@@ -310,6 +310,43 @@ separate and lesser concern. Corrected, with the plan that follows from it:
   point: supplying librdkafka's five archives only moved the failure to `sqlx4k`'s symbols, and
   there is no reason to think that is the last of them.
 
+**Both have since been done, and the second one ended somewhere better than expected**
+([B-22](../backlog/B-22-replay-the-linker-command.md), `recipe/replay-link.sh`, `logs/b-22/`).
+
+`-Xverbose-phases=Linker` prints the whole `ld.lld` invocation and `-Xtemporary-files-dir` keeps
+the object it names. **Replaying that line with the compiler's own object reproduces the ordinary
+build byte for byte** — so the dependency list is the build's, no archive is ever chased, and the
+static-link question dissolves: only the *training* binary links the profile runtime, and no
+measured arm's linkage changes at all.
+
+**The training arm then works end to end.** Instrumented bitcode carries no profile metadata, so
+kotlinc runs its own full pipeline and emits the object *even though its own link step fails*;
+the replayed line plus the profile runtime gives a binary that runs and writes an IR-level
+profile.
+
+**The use arm does not, and the reason is a property of the toolchain rather than of this
+service.** A module carrying profile metadata makes kotlinc emit the `CG Profile` module flag
+**twice** — once from its LTO pipeline, once from the `clang++` codegen step — and it then
+rejects its own module:
+
+```
+module flag identifiers must be unique (or of 'require' type)
+!"CG Profile"
+```
+
+Neither copy comes from the input; `opt -passes=pgo-instr-use` emits no such flag. The only
+`-Xllvm-lto-passes` value that avoids the collision is one that does **no LTO**, and once LTO is
+external the arm stops being comparable: Kotlin/Native's own LTO internalises and dead-strips
+**3 027 defines to 411**, which `opt -passes=default<O3>` does not reproduce because nothing has
+told it what may be internalised. Built that way, both arms run and their link lines differ only
+in the object — and the binary is **1 824 320 bytes against the ordinary build's 484 608**.
+
+**This replaces "the linker failed" with something a reader can act on.** The first form invited
+more linker work. The real obstacle is that **a profile-carrying module cannot pass through
+Kotlin/Native's own LTO pipeline on 2.4.20**, which is where anyone attempting instrumentation
+PGO on a Kotlin/Native service will stop — and it is the one thing in this study that a fork
+would plausibly have fixed.
+
 **That condition has since been tested and it failed.** The paragraph this replaces said the
 probe was worth the work *if* a paged allocator lifted Kotlin plus runtime to around 60 %. It
 lifts Kotlin's own share and lowers the sum, to ~28.5 %. The macro arms are dropped.
