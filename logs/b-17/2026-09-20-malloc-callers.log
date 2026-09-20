@@ -1,0 +1,28 @@
+== ingest: 5592 of 50639 samples (11.0%) have an allocator leaf
+    3.70%  runtime                kotlin::alloc::CustomAllocator::CreateObject(TypeInfo cons
+    2.69%  runtime                kotlin::alloc::CustomAllocator::CreateArray(TypeInfo const
+    0.83%  libc-and-other-native  _int_memalign
+    0.71%  runtime                kotlin::gc::internal::MainGCThread<kotlin::gc::internal::C
+    0.56%  kotlin:kfun            kfun:kotlinx.cinterop.ArenaBase#clearImpl(){}
+
+== apievents: 8927 of 50505 samples (17.7%) have an allocator leaf
+    5.93%  runtime                kotlin::alloc::CustomAllocator::CreateArray(TypeInfo const
+    3.52%  runtime                kotlin::alloc::CustomAllocator::CreateObject(TypeInfo cons
+    2.50%  libc-and-other-native  sqlite3MemMalloc
+    1.25%  runtime                kotlin::gc::internal::MainGCThread<kotlin::gc::internal::C
+    0.58%  libc-and-other-native  <alloc::ffi::c_str::CString>::new::SpecNewImpl>::spec_new_
+
+== journal: 4660 of 24710 samples (18.9%) have an allocator leaf
+    6.87%  runtime                kotlin::alloc::CustomAllocator::CreateArray(TypeInfo const
+    4.50%  runtime                kotlin::alloc::CustomAllocator::CreateObject(TypeInfo cons
+    2.09%  libc-and-other-native  sqlite3MemMalloc
+    1.63%  runtime                kotlin::gc::internal::MainGCThread<kotlin::gc::internal::C
+    0.46%  libc-and-other-native  <alloc::raw_vec::RawVecInner>::finish_grow
+
+== health: 10873 of 71766 samples (15.2%) have an allocator leaf
+    6.50%  runtime                kotlin::alloc::CustomAllocator::CreateObject(TypeInfo cons
+    4.40%  runtime                kotlin::alloc::CustomAllocator::CreateArray(TypeInfo const
+    1.35%  kotlin:kfun            kfun:kotlinx.cinterop.ArenaBase#clearImpl(){}
+    1.26%  runtime                kotlin::gc::internal::MainGCThread<kotlin::gc::internal::C
+    0.91%  libc-and-other-native  __posix_memalign
+

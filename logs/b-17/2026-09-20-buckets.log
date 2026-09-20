@@ -1,0 +1,56 @@
+== health   71766 samples
+   kotlin:kfun                  23363  32.55%
+   libc-and-other-native        18437  25.69%
+   kernel                       16731  23.31%
+   runtime                      12793  17.83%
+   vdso                           294   0.41%
+   rust                           148   0.21%
+   --------------------------
+   KOTLIN self (the gate)       23363  32.55%
+   Kotlin anywhere on stack     41053  57.20%
+   unresolved                       0   0.00%   
+   stacks of depth 1 (no callers recorded): 28.1%
+   reconciles: True
+
+== ingest   50639 samples
+   kernel                       16886  33.35%
+   libc-and-other-native        15697  31.00%
+   kotlin:kfun                  10746  21.22%
+   runtime                       5625  11.11%
+   rust                          1330   2.63%
+   vdso                           355   0.70%
+   --------------------------
+   KOTLIN self (the gate)       10746  21.22%
+   Kotlin anywhere on stack     18810  37.15%
+   unresolved                       0   0.00%   
+   stacks of depth 1 (no callers recorded): 21.9%
+   reconciles: True
+
+== apievents   50505 samples
+   libc-and-other-native        23187  45.91%
+   runtime                      10466  20.72%
+   kotlin:kfun                   8285  16.40%
+   kernel                        7491  14.83%
+   rust                           863   1.71%
+   vdso                           213   0.42%
+   --------------------------
+   KOTLIN self (the gate)        8285  16.40%
+   Kotlin anywhere on stack     14294  28.30%
+   unresolved                       0   0.00%   
+   stacks of depth 1 (no callers recorded): 32.9%
+   reconciles: True
+
+== journal   24710 samples
+   libc-and-other-native        10583  42.83%
+   runtime                       6771  27.40%
+   kernel                        3424  13.86%
+   kotlin:kfun                   3419  13.84%
+   rust                           380   1.54%
+   vdso                           133   0.54%
+   --------------------------
+   KOTLIN self (the gate)        3419  13.84%
+   Kotlin anywhere on stack      6416  25.97%
+   unresolved                       0   0.00%   
+   stacks of depth 1 (no callers recorded): 33.6%
+   reconciles: True
+

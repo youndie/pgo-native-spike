@@ -1,7 +1,7 @@
 ---
 id: B-17
 title: "RQ1, second point: each endpoint at 50-70 % of its own saturation"
-status: open
+status: done
 priority: P0
 size: M
 stage: stage-1-ceiling
@@ -48,3 +48,104 @@ The number that decides this study sits between the two ends, and neither existi
   pipeline and still reports above 80 % Kotlin. A change of capture mode is a change of
   instrument.
 - Anchors: `logs/b-17/`, `pgo-native-spike/bench/ceiling.sh`, `pgo-native-spike/scripts/ceiling_report.py`.
+
+---
+
+## Findings — 2026-09-20
+
+# The drop rule does **not** fire
+
+**A2.3: Route A, RQ5 and RQ6 are dropped if Kotlin self plus runtime stays under 40 % on every
+work endpoint.** It is 41.24 % on `/journal`, so the condition fails and **Route A survives** —
+by 1.24 percentage points on one of three work endpoints.
+
+That margin is small in absolute terms and is **not** noise: at 24 710 samples the binomial
+interval on 41.24 % is ±0.61 %, so the true value is 40.6–41.9 % and is above 40 with confidence.
+The call is close but it is clean.
+
+| endpoint | rate | knee | Kotlin self | runtime | **self + runtime** | Kotlin anywhere | kernel | libc & native |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `GET /health/live` | 960 | 1600 | 32.55 % | 17.83 % | 50.38 % | 57.20 % | 23.31 % | 25.69 % |
+| `POST /hooks/{id}` | 180 | 300 | 21.22 % | 11.11 % | **32.33 %** | 37.15 % | 33.35 % | 31.00 % |
+| `GET /api/events` | 120 | 200 | 16.40 % | 20.72 % | **37.13 %** | 28.30 % | 14.83 % | 45.91 % |
+| `GET /journal` | 48 | ≥80 | 13.84 % | 27.40 % | **41.24 %** | 25.97 % | 13.86 % | 42.83 % |
+
+Every run delivered its offered rate to five significant figures with sane p50s, so A2.2's
+unsaturated requirement is met by measurement rather than by assertion. Zero unresolved samples.
+Seed: 30 s of ingest at 200 rps, 4.1 MB of database. `nproc` 4.
+
+**RQ1's own verdict is unchanged: still grey.** No endpoint reaches 40 % Kotlin *self*; the
+highest is 32.55 % on the endpoint that does no work. The gradient B-07 found holds on the
+re-pinned binary at rule-chosen rates — the more the endpoint does, the less of it is Kotlin.
+
+Against B-07's numbers (retired binary, everything at 200 rps) the shares moved modestly:
+ingest 33.46 → 32.33, apievents 40.69 → 37.13, journal 46.24 → 41.24, health 49.39 → 50.38. **The
+rate rule did not rescue the study and did not sink it either**, which is the outcome that
+justifies having fixed the rule before looking.
+
+### Who calls libc malloc: the Kotlin/Native allocator itself
+
+The question A2.5 posed, answered from the call graphs already captured rather than from the
+dwarf capture that was supposed to answer it. **11.0–18.9 % of all samples have an allocator
+function as their leaf** — on `/journal` that is larger than the entire Kotlin bucket.
+
+| caller above the allocator | ingest | apievents | journal | health |
+|---|---:|---:|---:|---:|
+| `kotlin::alloc::CustomAllocator::CreateObject` | 3.70 % | 3.52 % | 4.50 % | 6.50 % |
+| `kotlin::alloc::CustomAllocator::CreateArray` | 2.69 % | 5.93 % | 6.87 % | 4.40 % |
+| `MainGCThread<CmsGCTraits>::PerformFullGC` | 0.71 % | 1.25 % | 1.63 % | 1.26 % |
+| `sqlite3MemMalloc` | — | 2.50 % | 2.09 % | — |
+| Rust (`CString::new`, `RawVecInner::finish_grow`) | — | 0.58 % | 0.46 % | — |
+| `kfun:kotlinx.cinterop.ArenaBase#clearImpl` | 0.56 % | — | — | 1.35 % |
+
+**It is not Ktor's buffers and it is not mostly SQLite. It is Kotlin/Native's own allocator
+forwarding to system malloc** — which is what `pagedAllocator=false` means, and `paged-off` is
+the setting the pin chose.
+
+That sharpens [B-18](B-18-allocator-probe.md) considerably: a faster malloc sits directly under
+the largest identified caller, and there is a second, cheaper probe the brief's non-goals do not
+touch — **xyk already exposes the allocator as a build property**, so `fixed16` or `default` is an
+arm rather than a preload. Both are recorded there.
+
+### `--call-graph dwarf` does not work here, and the AC's remedy does not exist
+
+The AC asked for a dwarf capture to fix B-07's truncated inclusive column. It produces **nothing**.
+
+| | stacks | Kotlin frames | mean depth |
+|---|---:|---:|---:|
+| control, frame pointers | 11 990 | 11 990 | — |
+| control, dwarf | **0** | 0 | — |
+| subject, frame pointers | 24 710–71 766 | present | 9.9–19.7 |
+| subject, dwarf | 506–2 870 | **0** | 8.7–9.4 (kernel only) |
+
+On the subject dwarf returns kernel-only stacks; on the control it returns nothing at all. **Two
+candidate mechanisms are ruled out**: `.eh_frame` is present and large (1.35 MB, 269 296 entries),
+and this `perf` reports `dwarf-unwind: [ on ]` with libdw. A third — that my `dwarf,2048` stack
+dump was too small, which would have been my parameter rather than a platform limit — was tested
+across 2048, 4096, 8192 and 16384 and gives 0, 1, 0 and 2 stacks. **The cause is not
+established**, and the consequence is that the inclusive column stays a lower bound taken from
+the frame-pointer capture, where 21.9–33.6 % of stacks have no callers.
+
+### The control
+
+Frame-pointer capture on the arithmetic probe: **11 990 stacks, every one carrying a `kfun:`
+frame**. The pipeline still reports a Kotlin-dominated workload as Kotlin-dominated at the rates
+and captures used here.
+
+**And it caught a false zero first.** The dwarf control initially reported "0 stacks" — because
+an earlier cleanup had deleted the binary and there was no process to profile. An empty capture
+and a missing subject are the same evidence, which is the third time that shape has appeared in
+this study.
+
+### Not covered
+
+- **The GC log.** Still [B-19](B-19-stamp-the-commit-into-the-binary.md): `-Xruntime-logs=gc=info`
+  needs a property xyk does not expose. The collector's *share* is measured here by symbol
+  (`PerformFullGC` 0.71–1.63 % as an allocator caller, more as a leaf); its pause and sweep times
+  are not.
+- **`/journal`'s knee.** The ladder reached 80 rps without saturating and said so rather than
+  returning its last rung as a knee. So `/journal`'s 48 rps is 60 % of a lower bound, not of the
+  knee — the endpoint may tolerate more, and its share is the one the drop rule turned on.
+  **This is the weakest number in the table and the one worth re-taking first.**
+- **Re-confirming the ruler on the new A0.** [B-16](B-16-unblock-off-host-builds.md) flagged it;
+  not done here.
