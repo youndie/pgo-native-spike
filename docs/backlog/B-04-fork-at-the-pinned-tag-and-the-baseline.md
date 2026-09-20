@@ -93,5 +93,49 @@ a question there, and the two cases are not the same decision.
 - `wsl-run` refuses this repository because it has no mutagen session, and it should not have one:
   the fork is upstream source cloned on the build host, never edited on the Mac.
 
-**Where this stopped:** the shallow clone of `v2.4.20` is running on `bench-a`. Nothing is built
-yet, and how Kotlin/Native is built from this tree is read from the tree rather than from memory.
+### And then the host decision was wrong, for a reason neither table column covered
+
+The clone failed in six milliseconds. **`bench-a` has no default route.** Its egress is a
+deliberate allow-list — there is no `default` line in `ip route`, only specific host routes — and
+the measurement host being locked down is sensible rather than broken.
+
+| destination | |
+|---|---|
+| `github.com` :80 and :443 | **BLOCKED** |
+| `cache-redirector.jetbrains.com` :443 | **BLOCKED** |
+| `repo.maven.apache.org`, `download.jetbrains.com`, `services.gradle.org`, `plugins.gradle.org` | OK |
+| `deb.debian.org` :80 | OK |
+
+That is exactly the shape that lets xyk build there — Gradle resolves from Maven Central — and
+stops a compiler being built there. **I checked cores, memory and disk before choosing the host
+and did not check whether it could reach anything**, which is the part of "check the host before
+the code" that a table of resources does not cover.
+
+**Two blockers, not one**, and copying the source across ssh only removes the first:
+
+1. `github.com` is unreachable, so the tree has to arrive another way.
+2. `cache-redirector.jetbrains.com` is unreachable, and that is where Kotlin/Native fetches its
+   toolchain dependencies. `bench-a`'s `~/.konan/dependencies` holds
+   **`llvm-21-x86_64-linux-essentials-116`** and not the `dev` bundle — it has been *using* the
+   prebuilt distribution (`kotlin-native-prebuilt-linux-x86_64-2.4.20`), never building one.
+   `konan.properties` points `llvmHome.linux_x64` at `$llvm.linux_x64.dev`, so a compiler build
+   needs a bundle this host cannot fetch.
+
+**That second point is also half of [B-05](B-05-six-unknowns-of-the-release-pipeline.md)'s H1**,
+found here rather than there: the `dev` bundle is a separate download from the `essentials` one a
+user build needs, and it comes from the blocked host.
+
+### The other candidate has not freed up
+
+Re-checked at the end of this iteration: 3 of 15 GB available, load 1.6, three Gradle daemons
+still resident, so nothing changed and the reason not to use it stands.
+
+**Where this stopped.** No build host. The item needs one of: egress on `bench-a` for
+`github.com` and `cache-redirector.jetbrains.com`; or the WSL box freed, which means establishing
+that those daemons are nobody's and stopping them; or a third machine. **This is a question for
+the owner and not a thing to decide by picking whichever failure is quieter** — the choice moves
+which glibc the baseline is built against, which is the variable kill criterion 2 exists to hold
+still.
+
+Nothing was built. The clone is not on disk; `/root/kotlin-fork` was removed by the failed clone
+and nothing else on either host was changed.
