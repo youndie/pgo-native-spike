@@ -1,0 +1,40 @@
+=== host ===
+DESKTOP-85OS64M
+20
+=== profile ===
+Instrumentation level: IR  entry_first = 0  instrument_loop_entries = 0
+Total functions: 13286
+Maximum function count: 101657230
+=== TRUE profile applied to the macro subject ===
+defines in the module:                 25173
+functions in the profile:              13285
+... with a non-zero counter:           5763
+... of those, profile applied:         5762
+... of those, dropped:                 1
+      still a define -> hash mismatch: 0
+      no longer a define -> inlined or not emitted: 1
+        absent:   out;
+  opt hash-mismatch warnings: 0
+=== CONTROL: every CFG hash flipped by one bit ===
+defines in the module:                 25173
+functions in the profile:              13285
+... with a non-zero counter:           5763
+... of those, profile applied:         0
+... of those, dropped:                 5763
+      still a define -> hash mismatch: 5762
+      no longer a define -> inlined or not emitted: 1
+        mismatch: AddTLSRecord
+        mismatch: AllocArrayInstance
+        mismatch: AllocInstance
+        mismatch: CallInitGlobalPossiblyLock
+        mismatch: CallInitThreadLocal
+        mismatch: CommitTLSStorage
+        mismatch: CompareAndSetVolatileHeapRef
+        mismatch: CompareAndSwapVolatileHeapRef
+        mismatch: CreateStringFromCString
+        mismatch: CreateStringFromUtf16
+        absent:   out;
+  opt hash-mismatch warnings: 13784
+  !prof surviving in the module: 140  (true profile: 24387)
+=== distinct CFG hashes among 13286 profiled functions ===
+   13286 functions, 2366 distinct hashes

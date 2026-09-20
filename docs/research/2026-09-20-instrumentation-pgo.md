@@ -9,7 +9,8 @@ date: 2026-09-20
 # Instrumentation PGO for Kotlin/Native — results
 
 **Final.** Every research question has a verdict, and the macro half was **dropped by a rule
-declared before the measurement that decided it** rather than left unfinished. Every number here
+declared before the measurement that decided it** rather than left unfinished. **RQ0 is green on
+the macro subject**, which is the one thing the brief asked that this study can answer yes to. Every number here
 has a backlog item, a log directory and a command behind it; nothing is carried over from another
 project or inferred from a prior. The recipe is [`recipe/pgo.sh`](../../recipe/pgo.sh), which runs.
 
@@ -21,7 +22,7 @@ reason each was made. The evidence this study started from is
 
 | RQ | Question | Verdict | |
 |---|---|---|---|
-| **RQ0** | Can a Kotlin/Native release binary write a `.profraw` that merges, and can the toolchain apply the resulting `.profdata`? | **GREY** | the mechanism works, on stock tools, with no fork — and **170 of 171 non-zero functions get the profile applied, 0 dropped on a hash mismatch**. Grey because the brief defines green *on the macro subject* and this is the microbenchmark |
+| **RQ0** | Can a Kotlin/Native release binary write a `.profraw` that merges, and can the toolchain apply the resulting `.profdata`? | **GREEN** | **on the macro subject**: the profile merges IR-level from 4 480 real requests, and **5 762 of 5 763 functions with non-zero counts have it applied — 99.98 % against the 80 % line, 0 dropped on a hash mismatch**. On stock tools, with no fork |
 | **RQ1** | What share of self CPU is Kotlin code? | **GREY** | 13.84–35.38 % across four endpoints on the pinned build. Measured on the default allocator too, because the pin puts libc in the denominator: Kotlin's share rises, the sum with the runtime **falls** to ~28.5 %, and the conclusion holds either way |
 | **RQ2** | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? | **GREEN**, on an arm the brief listed as a control | promotion and inlining in the IR; −11.2 % itable and −12.6 % vtable at 99 % confidence **on 90/10**. The pre-registered single-receiver case came in at −7.9 % and did not separate |
 | **RQ3/RQ4** | Macro effect on the service | **DROPPED** | by A2.3: Kotlin self plus runtime is 28.4–28.6 % on every work endpoint, on **both** allocator builds |
@@ -131,13 +132,42 @@ hosts expose no PMU, so branch misses cannot be counted and the mechanism cannot
 directly. And there is a competing explanation that needs no predictor at all: **inlining removes
 call overhead in both cases**, whatever the branch predictor does.
 
-## RQ0: the mechanism works, the verdict is grey
+## RQ0 is green, on the subject the brief named
 
 A profile comes out of a Kotlin/Native binary, merges as IR-level, and applies — on stock tools,
-with no fork. That is the useful part and it is solid.
+with no fork. **On the service, not only on the microbenchmark.**
 
-**It is not green, and the first version of this document said it was.** The brief defines green
-*on the macro subject*, and this is the microbenchmark. Worse, the numbers reported — 916
+The pre-registered condition, unedited: *"On the macro subject: the profile merges, and at least
+80 % of functions with non-zero counts have it applied in the rebuilt IR."* Measured
+([B-21](../backlog/B-21-rq0-the-two-numbers.md), `logs/b-21/`), from **4 480 real requests across
+all four endpoints** of the instrumented service:
+
+| | |
+|---|---:|
+| functions in the profile | 13 285 |
+| **... with a non-zero counter** | **5 763** |
+| **... of those, profile applied** | **5 762** |
+| **... dropped on a CFG hash mismatch** | **0** |
+| **share applied, against the 80 % line** | **99.98 %** |
+
+**And the zero is believable, because the counter was shown able to report the opposite.** With
+every CFG hash flipped by one bit and names and counters untouched, `opt` emits **13 784**
+hash-mismatch warnings against the true profile's **0**, the module keeps **140** `!prof`
+annotations against **24 387**, and the applied count goes to zero. Both instruments move
+together, in both directions.
+
+**The binary this rests on is the first real use of the replayed link.** It is also where the
+static pin had to be stepped around: the profile runtime needs a dynamic executable, and merely
+dropping `-static` leaves `-Bstatic … -lc`, which the loader rejects outright. The training arm
+uses the link line of a non-static build — sound because **the two builds' IR is byte-identical**,
+checked rather than assumed, so `staticLink` cannot reach what the profile is about.
+
+**What green does not claim.** The condition says *in the rebuilt IR*, and that is what was
+measured. A rebuilt *binary* carrying the profile is blocked by the `CG Profile` wall above, and
+RQ0's green does not ask for one.
+
+**The earlier grey, for the record.** The first version of this document called RQ0 green on the
+microbenchmark; the brief defines green on the macro subject. Worse, the numbers reported — 916
 functions in the profile, 929 annotated defines — **are two different sets, and neither is the
 pre-registered ratio**. Green needs two numbers that were never computed:
 
@@ -145,6 +175,7 @@ pre-registered ratio**. Green needs two numbers that were never computed:
 - how many were **dropped on a hash mismatch**.
 
 A4.4's re-scope moved the *item* to the microbenchmark; it did not move RQ0's green condition.
+Both numbers now exist on both subjects.
 
 **Both numbers have since been computed on the microbenchmark** ([B-13](../backlog/B-13-publish-the-result.md),
 `logs/b-13/`), by a reader with its own control:
