@@ -73,10 +73,22 @@ def main():
         except (ValueError, ZeroDivisionError):
             return "?"
 
+    # THE CONTAMINATION GUARD, and the positive control is what showed it was needed. The machine
+    # estimate charges everything running on the box to this arm. The idle-arm column was supposed
+    # to catch that and does not: under a two-core hog the idle arm got LESS CPU, so the column
+    # moved the wrong way. What does catch it is machine busy against the two arms' own CPU - 1.00
+    # on every clean round, 2.6-2.9 on every hogged one. Anything above 1.2 means the machine
+    # estimate is measuring something that is not the subject, and the row says so rather than
+    # leaving a plausible number to be read later.
+    arms_s = proc_s + idle_s
+    ratio = machine_s / arms_s if arms_s > 0 else 0.0
+    verdict = "clean" if ratio <= 1.2 else "CONTAMINATED"
+
     print(",".join(str(x) for x in [
         arm, round_, rps, p50, p99, dropped, failed, responses, offered, closes,
         "%.2f" % proc_s, "%.2f" % idle_s, "%.2f" % machine_s,
         per_req(proc_s), per_req(machine_s), nproc, "%.1f" % wall,
+        "%.2f" % ratio, verdict,
     ]))
 
 

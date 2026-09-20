@@ -196,7 +196,7 @@ ceiling)
   ;;
 control)
   echo "=== POSITIVE CONTROL: arm b runs under a concurrent load; it must land OUTSIDE the ruler ==="
-  echo "arm,round,rps,p50,p99,dropped,failed,responses,offered,accounting,proc_cpu_s,idle_arm_cpu_s,machine_busy_s,us_proc,us_machine,nproc,wall_s" > "$OUT/control.csv"
+  echo "arm,round,rps,p50,p99,dropped,failed,responses,offered,accounting,proc_cpu_s,idle_arm_cpu_s,machine_busy_s,us_proc,us_machine,nproc,wall_s,machine_over_arms,contamination" > "$OUT/control.csv"
   for round in 1 2 3; do
     run_arm a "$round"
     s "setsid nohup bash -c 'exec -a ruler-hog bash -c \"while :; do :; done\"' >/dev/null 2>&1 </dev/null & setsid nohup bash -c 'exec -a ruler-hog bash -c \"while :; do :; done\"' >/dev/null 2>&1 </dev/null & disown -a" >/dev/null 2>&1
@@ -209,7 +209,7 @@ control)
   ;;
 ruler)
   echo "=== $ROUNDS rounds at $RATE rps, the same binary as both arms, interleaved, round 1 discarded ==="
-  echo "arm,round,rps,p50,p99,dropped,failed,responses,offered,accounting,proc_cpu_s,idle_arm_cpu_s,machine_busy_s,us_proc,us_machine,nproc,wall_s" > "$OUT/ruler.csv"
+  echo "arm,round,rps,p50,p99,dropped,failed,responses,offered,accounting,proc_cpu_s,idle_arm_cpu_s,machine_busy_s,us_proc,us_machine,nproc,wall_s,machine_over_arms,contamination" > "$OUT/ruler.csv"
   for round in $(seq 1 "$ROUNDS"); do
     for arm in a b; do run_arm "$arm" "$round"; done
   done
