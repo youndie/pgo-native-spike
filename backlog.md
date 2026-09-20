@@ -40,12 +40,11 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (11)
+## Open (10)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
 | [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[?]` | Build the fork at v2.4.20, and prove it is a valid baseline | P0 | L | B-01 |
-| [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[~]` | RQ1 — the ceiling: what share of self CPU is Kotlin code | P0 | M | B-03, B-06 |
 | [B-08](docs/backlog/B-08-rq0-a-merged-profile-applied.md) `[ ]` | RQ0 — a profile that merges and applies, by Route B then Route A | P0 | XL | B-05 |
 | [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[ ]` | RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth | P0 | M | B-08 |
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
@@ -56,7 +55,7 @@ an item proposing either does not belong in this file.
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 | [B-15](docs/backlog/B-15-second-sampler-for-the-ceiling.md) `[ ]` | Cross-check the ceiling with razves's sampler, as a second implementation | P2 | M | B-07 |
 
-## Closed (4)
+## Closed (5)
 
 **The stand, before any compiler work**
 
@@ -67,6 +66,7 @@ an item proposing either does not belong in this file.
 **The ceiling**
 
 - [B-06](docs/backlog/B-06-attribution-grammar-before-the-ceiling.md) `[x]` - Fix the attribution grammar, with counts, before the ceiling is read
+- [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[x]` - RQ1 — the ceiling: what share of self CPU is Kotlin code
 
 <!-- END INDEX -->
 

@@ -11,7 +11,7 @@ counts in both B-02 and B-06.
 """
 import sys
 
-from attribution import bucket
+from attribution import bucket, parse_line
 
 CASES = [
     # symbol, dso, expected bucket, why this one
@@ -35,6 +35,18 @@ CASES = [
 ]
 
 
+LINES = [
+    # THE GAP THIS CLOSES: every case above hands `bucket()` a symbol that is already split out.
+    # The line parser was never exercised, and it was wrong - a demangled C++ name has spaces in
+    # it, so splitting on whitespace made the symbol `void`.
+    ("     55f1b2 void kotlin::gc::internal::MainGCThread<kotlin::gc::internal::CmsGCTraits>::PerformFullGC(long) (xyk-pagedoff)",
+     "runtime", "a demangled C++ name with a return type and spaces"),
+    ("     4a1c20 kfun:io.ktor.server.routing.Route#handle(kotlin.Int; kotlin.String){} (xyk-pagedoff)",
+     "kotlin:kfun", "a Kotlin signature with a space after the semicolon"),
+    ("ffffffff981fe443 __handle_mm_fault ([kernel.kallsyms])", "kernel", "the plain case"),
+]
+
+
 def main():
     bad = 0
     for sym, dso, want, why in CASES:
@@ -42,7 +54,14 @@ def main():
         ok = got == want
         bad += not ok
         print(f"  {'ok  ' if ok else 'FAIL'}  {want:22} {'' if ok else '<- got ' + got:24} {why}")
-    print(f"\n{len(CASES) - bad}/{len(CASES)} cases land where they were declared to")
+    for line, want, why in LINES:
+        got_pair = parse_line(line)
+        got = bucket(*got_pair) if got_pair else "UNPARSED"
+        ok = got == want
+        bad += not ok
+        print(f"  {'ok  ' if ok else 'FAIL'}  {want:22} {'' if ok else '<- got ' + got:24} {why}")
+    n = len(CASES) + len(LINES)
+    print(f"\n{n - bad}/{n} cases land where they were declared to")
     return 1 if bad else 0
 
 

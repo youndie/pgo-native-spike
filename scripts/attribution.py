@@ -12,6 +12,7 @@ rows add up to the input. The order is not arbitrary: `kotlin::` is tested BEFOR
 prefixes, because that is the pair that collides.
 """
 import re
+import gzip
 import sys
 from collections import Counter
 
@@ -22,6 +23,53 @@ KOTLIN_PREFIXES = ("kfun:", "kclass:", "kifacevtable:", "kifacetable:",
                    "krefs:", "kintf:", "kvar:", "kassociatedobjects:")
 
 RUST_CRATES = ("sqlx", "tokio", "core::", "alloc::", "std::", "hashbrown", "libsqlite3")
+
+LINE = re.compile(r"^\s*[0-9a-fA-F]+\s+(?P<sym>.*?)\s*\((?P<dso>[^()]*)\)\s*$")
+
+
+def parse_line(line):
+    """One `perf script -F ip,sym,dso` line -> (symbol, dso), or None.
+
+    Split on whitespace and the second field is the symbol - except that perf DEMANGLES, and a
+    demangled C++ name contains spaces. `void kotlin::gc::internal::MainGCThread<...>::PerformFullGC(long)`
+    split that way yields the symbol `void`, which matches no rule and lands in
+    "libc and other native". That silently moved a tenth of the samples out of the runtime bucket
+    and into libc, and the table still reconciled because every frame still landed somewhere.
+
+    The dso is the last parenthesised group on the line, so the symbol is everything between the
+    address and it.
+    """
+    m = LINE.match(line)
+    if not m:
+        return None
+    return m.group("sym"), m.group("dso")
+
+
+
+def _open(path):
+    """Raw perf output is stored gzipped: 284 MB of call graphs is 3 MB compressed, and a log
+    nobody can commit is a log nobody keeps."""
+    if path.endswith(".gz"):
+        return gzip.open(path, "rt", encoding="utf-8", errors="replace")
+    return _open(path)
+
+
+def significant(sym):
+    """Strip a C++ return type so the name the rules test is the qualified name.
+
+    perf demangles, and a demangled C++ signature is `<return type> <qualified::name>(<args>)`.
+    `void kotlin::gc::...::PerformFullGC(long)` therefore does not *start with* `kotlin::`, and a
+    rule written as `startswith` misses the entire GC thread - about a tenth of the samples on
+    this subject - and drops it into "libc and other native" instead. Templates make it worse:
+    the return type can itself be `std::unique_ptr<...>`.
+
+    The qualified name is the last space-separated token before the argument list, so that is what
+    is returned. A plain C symbol has no spaces and comes back unchanged.
+    """
+    head = sym.split("(", 1)[0]
+    if " " not in head:
+        return sym
+    return head.rsplit(" ", 1)[-1] + sym[len(head):]
 
 
 def bucket(sym, dso):
@@ -36,6 +84,7 @@ def bucket(sym, dso):
     # entire C++ runtime and all of Rust fell through to "libc and other native" - and the table
     # still reconciled, still totalled, and still looked like a measurement. The control caught it;
     # no aggregate check could have.
+    sym = significant(sym)
     unpre = sym[1:] if sym.startswith("_") else sym
     # BEFORE the Kotlin prefixes. `kotlin::` is the C++ runtime's namespace and `kotlin:` is not a
     # Kotlin symbol prefix; a pattern that cannot tell them apart reports one as the other.
@@ -55,12 +104,11 @@ def main():
     counts = Counter()
     examples = {}
     total = 0
-    for line in open(sys.argv[1], encoding="utf-8", errors="replace"):
-        parts = line.split(None, 2)
-        if len(parts) < 2:
+    for line in _open(sys.argv[1]):
+        got = parse_line(line)
+        if got is None:
             continue
-        sym = parts[1]
-        dso = parts[2] if len(parts) > 2 else ""
+        sym, dso = got
         b = bucket(sym, dso)
         counts[b] += 1
         examples.setdefault(b, sym)

@@ -1,0 +1,3 @@
+toolchain: /root/.konan/kotlin-native-prebuilt-linux-x86_64-2.4.20
+-rwxr-xr-x 1 root root 484904 Sep 20 13:08 /tmp/arith.kexe
+kfun FUNC symbols: 125
