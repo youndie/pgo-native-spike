@@ -1,0 +1,4 @@
+    ✓ 'p(99)<250' p(99)=4.55ms
+    http_req_failed
+    http_req_duration..............: avg=2.16ms p(50)=2.06ms p(95)=2.96ms p(99)=4.55ms max=24.1ms
+      { expected_response:true }...: avg=2.16ms p(50)=2.06ms p(95)=2.96ms p(99)=4.55ms max=24.1ms

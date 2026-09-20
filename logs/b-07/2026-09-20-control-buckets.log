@@ -1,0 +1,6 @@
+bucket                        samples   share   first symbol seen
+kotlin:kfun                     19974  99.96%   kfun:#main(){}
+kernel                              8   0.04%   irqentry_exit
+TOTAL                           19982 100.00%
+
+reconciles: True

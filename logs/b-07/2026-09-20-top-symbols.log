@@ -1,0 +1,32 @@
+== health: top of the libc+runtime buckets (9592 of 25254 samples)
+    4.65%  kotlin::gc::internal::MainGCThread<kotlin::gc::internal::CmsGCTraits>::P
+    4.26%  void
+    3.42%  _int_malloc
+    2.92%  kotlin::alloc::CustomAllocator::CreateObject(TypeInfo
+    2.62%  __futex_abstimed_wait_cancelable64
+    2.55%  __libc_calloc
+
+== ingest: top of the libc+runtime buckets (23080 of 52375 samples)
+    4.43%  kotlin::gc::internal::MainGCThread<kotlin::gc::internal::CmsGCTraits>::P
+    3.75%  void
+    3.17%  _int_malloc
+    2.54%  syscall
+    2.35%  __libc_calloc
+    2.18%  kotlin::alloc::CustomAllocator::CreateObject(TypeInfo
+
+== apievents: top of the libc+runtime buckets (42773 of 66111 samples)
+    8.76%  kotlin::gc::internal::MainGCThread<kotlin::gc::internal::CmsGCTraits>::P
+    6.67%  void
+    5.23%  _int_malloc
+    4.09%  malloc_consolidate
+    3.97%  __libc_calloc
+    2.70%  (anonymous
+
+== journal40: top of the libc+runtime buckets (12982 of 18628 samples)
+   11.25%  void
+   10.31%  kotlin::gc::internal::MainGCThread<kotlin::gc::internal::CmsGCTraits>::P
+    5.51%  __libc_calloc
+    4.87%  _int_malloc
+    4.24%  malloc_consolidate
+    2.75%  kotlin::alloc::CustomAllocator::CreateObject(TypeInfo
+
