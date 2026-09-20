@@ -18,6 +18,12 @@
 # rows exist, so an unseeded run measures an empty page and a run after a long ingest measures a
 # different service. The seed is stated with the results.
 set -uo pipefail
+# THE SCRIPT MUST NOT EXIT 0 WHEN IT FAILS. The first run died on `declare -A` - macOS ships bash
+# 3.2, which has no associative arrays - and still exited 0, so the harness reported success for a
+# run that produced one sweep out of four. A driver that cannot fail loudly is the same defect as
+# a check that cannot fail.
+trap 'rc=$?; [ $rc -ne 0 ] && echo "ceiling2: FAILED at line $LINENO (rc=$rc)" >&2; exit $rc' ERR
+FAILED=0
 SUBJECT=${SUBJECT:?}; GENERATOR=${GENERATOR:?}; SUBJECT_IP=${SUBJECT_IP:?}
 BINARY=${BINARY:-xyk-a0-c4ba99f}; SECRET=bench-secret; ENDPOINT=hook-1; OUT=${OUT:-logs/b-17}
 SEED_SECONDS=${SEED_SECONDS:-30}; SEED_RATE=${SEED_RATE:-200}
@@ -45,10 +51,17 @@ p50() { grep -oE 'p\(50\)=[0-9.]+[a-zµ]*' "$1" | head -1 | cut -d= -f2; }
 
 echo "=== seeding: ingest at $SEED_RATE rps for ${SEED_SECONDS}s ==="
 fire "$SEED_RATE" "${SEED_SECONDS}s" "/hooks/$ENDPOINT" ingest "$OUT/raw/seed.log"
-echo "  seeded rows: $(s "sqlite3 /root/b17-run/a.db 'select count(*) from events' 2>/dev/null || echo unknown")"
+# The subject host has no sqlite3, and reading a live WAL database from outside the process that
+# owns it is a bad idea anyway. The service counts its own rows.
+echo "  seeded rows (via /api/events): $(s "curl -s --max-time 5 'http://127.0.0.1:8091/api/events?limit=1' | grep -oE '\"total\"[: ]*[0-9]+' | grep -oE '[0-9]+$' || echo unknown")"
+echo "  db on disk: $(s "du -sh /root/b17-run/a.db 2>/dev/null | cut -f1")"
 sleep 20
 
-declare -A KNEE
+# Knees are kept in a file rather than an associative array, so this runs on the bash that is
+# actually here rather than the one the author assumed.
+KNEEFILE=$(mktemp)
+knee_set() { printf '%s %s\n' "$1" "$2" >> "$KNEEFILE"; }
+knee_get() { awk -v k="$1" '$1==k{v=$2} END{print (v==""?0:v)}' "$KNEEFILE"; }
 sweep() {
   local name=$1 arm=$2 path=$3; shift 3
   echo "=== saturation sweep: $name ==="
@@ -58,20 +71,21 @@ sweep() {
     local d p; d=$(delivered "$OUT/raw/sweep-$name-$r.log"); p=$(p50 "$OUT/raw/sweep-$name-$r.log")
     printf "  offered %5s -> delivered %-10s p50 %-9s" "$r" "${d:-?}" "${p:-?}"
     if awk -v d="${d:-0}" -v r="$r" 'BEGIN{exit !(d < r*0.97)}'; then
-      echo "  <- KNEE"; KNEE[$name]=$prev; sleep 12; return
+      echo "  <- KNEE"; knee_set "$name" "$prev"; sleep 12; return
     fi
     echo; prev=$r; sleep 12
   done
-  KNEE[$name]=$prev
+  knee_set "$name" "$prev"
+  echo "  (no knee found up to $prev - the ladder is too short, and that is a result)"
 }
-sweep health    control "/health/live"     200 400 800 1600
+sweep health    control "/health/live"     400 800 1600 2400 3200
 sweep ingest    ingest  "/hooks/$ENDPOINT" 100 200 300 400
 sweep apievents control "/api/events"      100 200 300 400
 sweep journal   control "/journal"          20  40  60  80
 
 measure() {
   local name=$1 arm=$2 path=$3
-  local knee=${KNEE[$name]:-0} rate
+  local knee rate; knee=$(knee_get "$name")
   rate=$(awk -v k="$knee" 'BEGIN{printf "%d", k*0.6}'); [ "$rate" -lt 10 ] && rate=10
   echo "=== $name: knee ${knee}, measuring at $rate rps (60 % of it) ==="
   g "setsid nohup env TARGET='http://$SUBJECT_IP:8091$path' ARM='$arm' RATE=$rate DURATION=50s \
@@ -100,7 +114,8 @@ measure journal   control "/journal"
 
 printf 'endpoint,knee,rate\n' > "$OUT/rates.csv"
 for k in health ingest apievents journal; do
-  printf '%s,%s,%d\n' "$k" "${KNEE[$k]:-0}" "$(awk -v v="${KNEE[$k]:-0}" 'BEGIN{printf "%d", v*0.6}')" >> "$OUT/rates.csv"
+  v=$(knee_get "$k")
+  printf '%s,%s,%d\n' "$k" "$v" "$(awk -v v="$v" 'BEGIN{printf "%d", v*0.6}')" >> "$OUT/rates.csv"
 done
 column -t -s, "$OUT/rates.csv"
 s "pkill -x $BINARY"
