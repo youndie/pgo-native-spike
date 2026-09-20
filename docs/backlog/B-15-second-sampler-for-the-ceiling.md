@@ -1,7 +1,7 @@
 ---
 id: B-15
 title: "Cross-check the ceiling with razves's sampler, as a second implementation"
-status: question
+status: wip
 priority: P2
 size: M
 stage: stage-1-ceiling
@@ -109,3 +109,14 @@ decide:
 
 Option 3 is the one that recovers most of the item's value for least effort, and option 4 is
 nearly free; they are not exclusive. Option 2 is the one with value beyond this repository.
+
+## Decision — 2026-09-21, by the owner
+
+**Option 3: cross-check on the microbenchmark.** Not the razves note, not the upstream `EINTR`
+fix, and not dropping it. So the item is re-scoped rather than closed:
+
+- **What it now checks is the attribution grammar**, against an independent sampler and an
+  independent symbol reader, on `probes/dispatch-bench.kt` — which has no selector and therefore
+  no signal problem.
+- **What it no longer checks is RQ1's binary.** The subject's buckets stay measured by one
+  implementation. The results document says so, and that stays true.
