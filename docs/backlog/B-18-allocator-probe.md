@@ -1,7 +1,7 @@
 ---
 id: B-18
 title: "The allocator probe: LD_PRELOAD jemalloc or mimalloc, outside the verdicts"
-status: open
+status: wip
 priority: P2
 size: S
 stage: stage-1-ceiling
