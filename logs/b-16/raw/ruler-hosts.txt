@@ -1,0 +1,5 @@
+subject:   ubuntu-8gb-nbg1-1 4 ldd (Ubuntu GLIBC 2.43-2ubuntu2.4) 2.43 
+generator: ubuntu-8gb-nbg1-2 4 k6 v1.4.1-release (commit/8cc106e574, go1.25.4, linux/amd64) 
+arm a:     xyk-pagedoff  11475544 bytes, mtime 2026-09-16 00:33:16.106395347 +0000
+arm b:     xyk-a0-c4ba99f  20169472 bytes, mtime 2026-09-20 13:57:01.817726717 +0000
+mode: ruler  rate: 200  duration: 30s  rounds: 9  connections: 200

@@ -40,6 +40,10 @@ SUBJECT=${SUBJECT:?set SUBJECT to the ssh destination of the host under test}
 GENERATOR=${GENERATOR:?set GENERATOR to the ssh destination of the load generator}
 SUBJECT_IP=${SUBJECT_IP:?set SUBJECT_IP to the address the generator reaches the subject on}
 BINARY=${BINARY:-xyk-pagedoff}
+# Arm b may be a DIFFERENT binary. The ruler runs one binary as both arms; every later comparison
+# in this study - fork against stock, A2 against A0, A3 against A0 - is two binaries through the
+# identical protocol, and the ruler is what says whether their difference means anything.
+BINARY_B=${BINARY_B:-$BINARY}
 SECRET=bench-secret
 ENDPOINT=hook-1
 OUT=${OUT:-logs/b-03}
@@ -69,15 +73,15 @@ mkdir -p "$OUT/raw"
 BODY='{"zen":"Non-blocking is better than blocking."}'
 SIGNATURE=$(printf %s "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -hex | sed 's/.*= //')
 
-cleanup() { s "pkill -x $BINARY; pkill -f '[r]uler-hog'" >/dev/null 2>&1 || true; }
+cleanup() { s "pkill -x $BINARY; pkill -x $BINARY_B; pkill -f '[r]uler-hog'" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
-echo "=== starting two copies of the SAME binary ($BINARY) on $SUBJECT ==="
+if [ "$BINARY" = "$BINARY_B" ]; then echo "=== two copies of the SAME binary ($BINARY) on $SUBJECT ==="; else echo "=== arm a=$BINARY  arm b=$BINARY_B  on $SUBJECT ==="; fi
 # WAIT FOR THE PORTS, not for the processes. xyk's own B-20 recorded this: the binary died on
 # start six times out of twelve, strictly alternating, every time a previous instance still held
 # the port — EADDRINUSE, reported by the binary as "nothing was started and nothing was served".
 # `pkill` returns as soon as the signal is sent, and the listener outlives it.
-s "pkill -x $BINARY 2>/dev/null
+s "pkill -x $BINARY 2>/dev/null; pkill -x $BINARY_B 2>/dev/null
 for i in \$(seq 1 60); do
   ss -ltnH 'sport = :8091 or sport = :8092' | grep -q . || break
   sleep 1
@@ -85,7 +89,7 @@ done
 rm -rf /root/ruler-run; mkdir -p /root/ruler-run; cd /root
 export XYK_BOOTSTRAP_ENDPOINT_ID=$ENDPOINT XYK_BOOTSTRAP_SECRET=$SECRET XYK_BOOTSTRAP_SUBSCRIBERS=https://sink.invalid/a
 XYK_DB_PATH=/root/ruler-run/a.db XYK_PORT=8091 setsid nohup ./$BINARY > /root/ruler-run/a.log 2>&1 < /dev/null &
-XYK_DB_PATH=/root/ruler-run/b.db XYK_PORT=8092 setsid nohup ./$BINARY > /root/ruler-run/b.log 2>&1 < /dev/null &
+XYK_DB_PATH=/root/ruler-run/b.db XYK_PORT=8092 setsid nohup ./$BINARY_B > /root/ruler-run/b.log 2>&1 < /dev/null &
 disown -a
 for i in \$(seq 1 60); do sleep 0.5
   curl -sf -o /dev/null http://127.0.0.1:8091/health/ready && curl -sf -o /dev/null http://127.0.0.1:8092/health/ready && { echo ready; exit 0; }
@@ -220,6 +224,7 @@ esac
 {
   echo "subject:   $(s 'hostname; nproc; ldd --version | head -1' | tr '\n' ' ')"
   echo "generator: $(g 'hostname; nproc; k6 version' | tr '\n' ' ')"
-  echo "binary:    $BINARY  $(s "stat -c '%s bytes, mtime %y' /root/$BINARY")"
+  echo "arm a:     $BINARY  $(s "stat -c '%s bytes, mtime %y' /root/$BINARY")"
+  echo "arm b:     $BINARY_B  $(s "stat -c '%s bytes, mtime %y' /root/$BINARY_B")"
   echo "mode: $MODE  rate: $RATE  duration: $DURATION  rounds: $ROUNDS  connections: $CONNECTIONS"
 } | tee "$OUT/raw/$MODE-hosts.txt"

@@ -1,0 +1,8 @@
+== logs/b-16/ruler.csv (16 counted rounds, round 1 discarded)
+  machine  mean    7732  a    7875  b    7588
+          round range  11.7%   observed A-vs-A  3.71%   95% CI on the difference +/- 2.4%
+  proc    mean    7553  a    7694  b    7412
+          round range  12.4%   observed A-vs-A  3.75%   95% CI on the difference +/- 2.7%
+  paired  mean +3.71%   95% CI +/-3.20%   (8 pairs, per-round sd 3.82% vs the ruler's 2.92%)
+  -> DISTINGUISHABLE: +3.71% against a 3.20% interval
+  idle-arm contamination 2.0-3.1%   dropped 0   accounting all close
