@@ -15,3 +15,17 @@ over ssh; nothing kept was written on either host.
 back exact with zero dropped and p50 5.3–6.7 ms; 400 offered delivers 345.9 with 671 dropped and
 p50 564 ms. The ruler is taken at **200 rps**, half the knee. A ruler taken on a saturated subject
 measures the saturation.
+
+## The runs, in the order they happened
+
+| CSV | gap between rounds | paired ruler | why it exists |
+|---|---|---:|---|
+| `ruler-provisional-broken-gate.csv` | 50–110 s, variable | ±5.6 % | idle gate v1: one-minute load average, a threshold this run cannot reach; waited 150 s and proceeded |
+| `ruler-provisional-gate-v2.csv` | ~140 s, fixed | ±3.9 % | idle gate v2: `/proc/stat` by fixed field positions, eight assumed, ten printed; reported "busy 9 cores" on a four-core box |
+| `ruler-settle20.csv` | ~24 s, fixed | ±5.5 % | the first run with a working gate |
+| `ruler.csv` | 120 s, fixed | ±4.6 % | the settle experiment; drifts +441 µs/round, R² 0.94 |
+| `control.csv` | — | — | arm b under a two-core hog: 17 113 µs against 7 832, 2.19× |
+
+All four are kept. Pooling their sixteen paired differences is where the ruler's 2.92 % standard
+deviation comes from, and the spread of their *unpaired* numbers — 3.2 % to 13.0 % — is the
+evidence that the unpaired estimator is the wrong one.

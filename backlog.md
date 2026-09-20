@@ -40,11 +40,10 @@ an item proposing either does not belong in this file.
 
 <!-- BEGIN INDEX -->
 
-## Open (12)
+## Open (11)
 
 | Task | | Priority | Size | Blocked by |
 |---|---|---|---|---|
-| [B-03](docs/backlog/B-03-the-ruler.md) `[~]` | The ruler: A0 against itself, in µs CPU per request, on the two-host stand | P0 | M | B-01 |
 | [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md) `[ ]` | Build the fork at v2.4.20, and prove it is a valid baseline | P0 | L | B-01 |
 | [B-06](docs/backlog/B-06-attribution-grammar-before-the-ceiling.md) `[ ]` | Fix the attribution grammar, with counts, before the ceiling is read | P0 | S | B-02 |
 | [B-07](docs/backlog/B-07-rq1-the-ceiling.md) `[ ]` | RQ1 — the ceiling: what share of self CPU is Kotlin code | P0 | M | B-03, B-06 |
@@ -57,12 +56,13 @@ an item proposing either does not belong in this file.
 | [B-12](docs/backlog/B-12-rq6-what-it-costs.md) `[ ]` | RQ6 — what it costs: binary size per owner, build time, A1's overhead | P2 | S | B-08 |
 | [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) `[ ]` | Make BRIEF.md's freeze checkable from the repository alone | P2 | XS | - |
 
-## Closed (2)
+## Closed (3)
 
 **The stand, before any compiler work**
 
 - [B-01](docs/backlog/B-01-pins-and-the-amendment-window.md) `[x]` - Pin every row of the fixed setup, and close the amendment window
 - [B-02](docs/backlog/B-02-can-the-subject-host-be-profiled.md) `[x]` - Can the subject host be profiled at all — perf, or nothing
+- [B-03](docs/backlog/B-03-the-ruler.md) `[x]` - The ruler: A0 against itself, in µs CPU per request, on the two-host stand
 
 <!-- END INDEX -->
 
