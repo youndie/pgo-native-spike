@@ -49,7 +49,7 @@ an item proposing either does not belong in this file.
 | [B-09](docs/backlog/B-09-rq2-indirect-call-promotion.md) `[ ]` | RQ2 — does indirect call promotion fire on Kotlin dispatch, and what is it worth | P0 | M | B-08 |
 | [B-10](docs/backlog/B-10-rq3-rq4-the-macro-arms.md) `[ ]` | RQ3 and RQ4 — arms A0, A2, A3 and A4 on the service | P0 | L | B-07, B-08 |
 | [B-13](docs/backlog/B-13-publish-the-result.md) `[ ]` | Publish the result, including the parts that were not measured | P0 | M | B-07, B-09, B-10, B-12 |
-| [B-16](docs/backlog/B-16-unblock-off-host-builds.md) `[ ]` | Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a | P0 | M | - |
+| [B-16](docs/backlog/B-16-unblock-off-host-builds.md) `[~]` | Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a | P0 | M | - |
 | [B-17](docs/backlog/B-17-rq1-second-point.md) `[ ]` | RQ1, second point: each endpoint at 50-70 % of its own saturation | P0 | M | B-16 |
 | [B-05](docs/backlog/B-05-six-unknowns-of-the-release-pipeline.md) `[ ]` | Answer the six believed-and-unchecked items against the fork's source | P1 | M | B-04 |
 | [B-11](docs/backlog/B-11-rq5-how-long-a-profile-lives.md) `[ ]` | RQ5 — how long a profile lives | P1 | M | B-10, B-17 |

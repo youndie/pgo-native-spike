@@ -1,7 +1,7 @@
 ---
 id: B-16
 title: "Unblock off-host builds: build xyk elsewhere, ship the binary to bench-a"
-status: open
+status: wip
 priority: P0
 size: M
 stage: stage-0-stand
