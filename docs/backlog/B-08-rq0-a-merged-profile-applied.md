@@ -8,7 +8,19 @@ stage: stage-2-feasibility
 blocked_by: [B-05]
 ---
 
-# B-08 — RQ0: a profile that merges and applies, by Route B then Route A
+# B-08 — RQ0: a profile that merges and applies, by Route B
+
+> **Re-scoped 2026-09-20 by [BRIEF](../../BRIEF.md) A2.4, after RQ1 came back grey.** Route A —
+> the five days inside the fork — is **not** attempted. This item is Route B only, on the
+> **microbenchmark binary** rather than the service, and it is time-boxed to two or three days
+> together with [B-09](B-09-rq2-indirect-call-promotion.md). The mechanism answer holds at any
+> offered rate, which is what makes it worth having when the macro half may not be.
+>
+> **It may not need the fork at all.** Route B's only requirement of the compiler is that the
+> linked pre-optimisation bitcode can be got out of it. If a stock `-X` flag does that, this item
+> and [B-05](B-05-six-unknowns-of-the-release-pipeline.md) come unblocked from
+> [B-04](B-04-fork-at-the-pinned-tag-and-the-baseline.md) entirely — which would take the build
+> host off this study's critical path. That is the first thing to check.
 
 Feasibility, and the study's longest budget: five working days, after which kill criterion 1
 applies and the write-up is the list of obstacles in the order they were hit, with the patch set as

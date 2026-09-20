@@ -5,10 +5,16 @@ status: open
 priority: P1
 size: M
 stage: stage-5-cost
-blocked_by: [B-10]
+blocked_by: [B-10, B-17]
 ---
 
 # B-11 — RQ5: how long a profile lives
+
+> **Conditional as of 2026-09-20 ([BRIEF](../../BRIEF.md) A2.3 and A2.4).** RQ5 is dropped if
+> Kotlin self plus runtime stays under 40 % on every work endpoint at the rate
+> [B-17](B-17-rq1-second-point.md) fixes, and dropped again if
+> [B-10](B-10-rq3-rq4-the-macro-arms.md)'s best-case probe comes back null. It is kept in the
+> backlog rather than deleted, because an item that vanished records nothing.
 
 A recipe nobody can operate is not a recipe. The profile is applied to the three next real commits
 of the subject, and separately to a workload it was not trained on. Green retains at least two

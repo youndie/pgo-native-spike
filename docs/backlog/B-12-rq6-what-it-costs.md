@@ -5,10 +5,16 @@ status: open
 priority: P2
 size: S
 stage: stage-5-cost
-blocked_by: [B-08]
+blocked_by: [B-08, B-17]
 ---
 
 # B-12 — RQ6: what it costs
+
+> **Conditional as of 2026-09-20 ([BRIEF](../../BRIEF.md) A2.3 and A2.4).** RQ6 is dropped if
+> Kotlin self plus runtime stays under 40 % on every work endpoint at the rate
+> [B-17](B-17-rq1-second-point.md) fixes, and dropped again if
+> [B-10](B-10-rq3-rq4-the-macro-arms.md)'s best-case probe comes back null. It is kept in the
+> backlog rather than deleted, because an item that vanished records nothing.
 
 Half a day. Binary size of A2 and A3 against A0, measured per owner with `razves`; green is within
 +5 % of A0, red is above +15 %. Build time and arm A1's run-time overhead are recorded and **not
