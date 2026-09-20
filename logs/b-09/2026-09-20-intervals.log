@@ -1,0 +1,16 @@
+mode      measure                    A0 ns/op           A2 ns/op    change  verdict
+single    both-single           1.910+/-0.062       1.667+/-0.173     -12.8%  MET
+single    itable-single         1.312+/-0.350       1.112+/-0.067     -15.2%  intervals overlap
+single    sum-single            0.715+/-0.078       0.686+/-0.050      -4.1%  intervals overlap
+single    vtable-single         1.019+/-0.145       0.903+/-0.065     -11.4%  intervals overlap
+
+skewed    both-skewed           2.619+/-0.120       2.345+/-1.591     -10.5%  intervals overlap
+skewed    itable-skewed         1.611+/-0.074       1.780+/-1.058     +10.5%  intervals overlap
+skewed    sum-skewed            0.848+/-0.270       0.814+/-0.295      -4.0%  intervals overlap
+skewed    vtable-skewed         1.226+/-0.049       1.262+/-0.643      +2.9%  intervals overlap
+
+uniform   both-uniform          4.874+/-2.327       2.901+/-0.495     -40.5%  intervals overlap
+uniform   itable-uniform        2.784+/-1.302       1.650+/-0.221     -40.7%  intervals overlap
+uniform   sum-uniform           1.106+/-0.272       0.757+/-0.068     -31.5%  MET
+uniform   vtable-uniform        2.756+/-1.470       1.870+/-0.741     -32.2%  intervals overlap
+
