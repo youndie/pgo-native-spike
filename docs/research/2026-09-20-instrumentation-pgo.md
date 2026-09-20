@@ -8,10 +8,10 @@ date: 2026-09-20
 
 # Instrumentation PGO for Kotlin/Native — results
 
-**Interim.** Five of the seven research questions have verdicts. The macro half is not finished
-and is reported as not measured rather than estimated. Every number here has a backlog item, a
-log directory and a command behind it; nothing is carried over from another project or inferred
-from a prior.
+**Final.** Every research question has a verdict, and the macro half was **dropped by a rule
+declared before the measurement that decided it** rather than left unfinished. Every number here
+has a backlog item, a log directory and a command behind it; nothing is carried over from another
+project or inferred from a prior. The recipe is [`recipe/pgo.sh`](../../recipe/pgo.sh), which runs.
 
 The pre-registration is [BRIEF.md](../../BRIEF.md), including three sets of amendments and the
 reason each was made. The evidence this study started from is
@@ -21,12 +21,12 @@ reason each was made. The evidence this study started from is
 
 | RQ | Question | Verdict | |
 |---|---|---|---|
-| **RQ0** | Can a Kotlin/Native release binary write a `.profraw` that merges, and can the toolchain apply the resulting `.profdata`? | **GREY** | the mechanism works, but green was defined *on the macro subject* and this is the microbenchmark — and the two numbers the threshold names were never computed |
-| **RQ1** | What share of self CPU is Kotlin code? | **GREY**, and **conditional on a build property** | 13.84–35.38 % across four endpoints — measured on a binary that opts out of the paged allocator, which puts libc in the denominator |
+| **RQ0** | Can a Kotlin/Native release binary write a `.profraw` that merges, and can the toolchain apply the resulting `.profdata`? | **GREY** | the mechanism works, on stock tools, with no fork — and **170 of 171 non-zero functions get the profile applied, 0 dropped on a hash mismatch**. Grey because the brief defines green *on the macro subject* and this is the microbenchmark |
+| **RQ1** | What share of self CPU is Kotlin code? | **GREY** | 13.84–35.38 % across four endpoints on the pinned build. Measured on the default allocator too, because the pin puts libc in the denominator: Kotlin's share rises, the sum with the runtime **falls** to ~28.5 %, and the conclusion holds either way |
 | **RQ2** | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? | **GREEN**, on an arm the brief listed as a control | promotion and inlining in the IR; −11.2 % itable and −12.6 % vtable at 99 % confidence **on 90/10**. The pre-registered single-receiver case came in at −7.9 % and did not separate |
-| **RQ3/RQ4** | Macro effect on the service | **NOT MEASURED** | Route B reaches the service's compiler and fails at its linker, twice |
-| **RQ5** | How long does a profile live? | **NOT MEASURED** | conditional on RQ3 |
-| **RQ6** | What does it cost in binary size? | **NOT MEASURED** | conditional on RQ3 |
+| **RQ3/RQ4** | Macro effect on the service | **DROPPED** | by A2.3: Kotlin self plus runtime is 28.4–28.6 % on every work endpoint, on **both** allocator builds |
+| **RQ5** | How long does a profile live? | **DROPPED** | same rule |
+| **RQ6** | What does it cost in binary size? | **DROPPED** | same rule |
 | — | The ruler | **2.92 %** per paired round | ±4.64 % at four counted rounds, ±2.44 % at eight |
 
 **Kill criterion 2 is moot** — it validates a fork as a baseline and there is no fork. Criteria 1,
@@ -103,6 +103,13 @@ Six guarded sites in the PGO arm against **zero** in A0. Nine interleaved rounds
 **Both controls of known outcome hold.** Uniform rotation gains nothing, exactly as the measured
 `icp-remaining-percent-threshold = 30` predicts for eight receivers at 12.5 % each.
 
+**That same row also excludes the rival explanation, which was going to need its own arm.** The
+worry behind arm A4 is that a PGO build is simply a *different* build — new layout, new inlining
+decisions — and that any rebuild would move the number. Here it cannot be that: the uniform and
+90/10 measurements come from **the same pair of binaries**, so a layout or rebuild effect would
+have to move both. It moves one, in the direction promotion predicts, and leaves the other
+slightly slower. **The gain is profile-guided.**
+
 **But the arm that carries the verdict is not the pre-registered one, and no amendment moved it.**
 The brief's RQ2 describes sites with "one receiver at run time"; 90/10 was listed as a *control*.
 The declared case came in at **−7.9 % and did not separate**. The substantive verdict is still
@@ -138,7 +145,27 @@ pre-registered ratio**. Green needs two numbers that were never computed:
 - how many were **dropped on a hash mismatch**.
 
 A4.4's re-scope moved the *item* to the microbenchmark; it did not move RQ0's green condition.
-Both gaps are [B-21](../backlog/B-21-rq0-the-two-numbers.md).
+
+**Both numbers have since been computed on the microbenchmark** ([B-13](../backlog/B-13-publish-the-result.md),
+`logs/b-13/`), by a reader with its own control:
+
+| | |
+|---|---:|
+| functions in the profile | 934 |
+| ... with a non-zero counter | 171 |
+| **... of those, profile applied** | **170** |
+| **... dropped on a hash mismatch** | **0** |
+
+So on the subject the item was re-scoped to, the profile applies essentially completely. **RQ0
+stays grey**, because the brief's green names the macro subject and the macro subject needs
+[B-22](../backlog/B-22-replay-the-linker-command.md)'s link.
+[B-21](../backlog/B-21-rq0-the-two-numbers.md) is now that one step, not three.
+
+**And the recipe is a script that a reader can run**: [`recipe/pgo.sh`](../../recipe/pgo.sh),
+exercised end to end on a host that had built nothing in this study. **Its two load-bearing
+steps were verified by removing them**, rather than by having worked once — without
+`-u__llvm_profile_runtime` the binary links, runs and silently writes no profile at all; with
+the stock version object the profile merges as `Front-end` and `pgo-instr-use` refuses it.
 
 ## A bound on promotion's contribution, independent of the bucket arithmetic
 
@@ -180,6 +207,30 @@ the code PGO touches is 1–3 % of a request. The ruler puts the macro bar at `m
 — 9.3 % at four counted rounds, 5 % at eight. **On every endpoint that does real work the
 expected effect is at or below the floor, in the best case.** The mechanism is real; the room for
 it on this service is not.
+
+### And the build property does not rescue it — it makes it worse
+
+The ceiling above sits on `pagedAllocator=false`, so the obvious objection is that the default
+build might leave PGO more room. It was measured, at rates re-derived from the knees the paged
+build actually reaches:
+
+| endpoint | Kotlin self | runtime | **self + runtime** | paged-off was |
+|---|---:|---:|---:|---:|
+| `GET /health/live` | 42.29 % | 5.15 % | 47.43 % | 50.38 % |
+| `POST /hooks/{id}` | 25.87 % | 2.58 % | **28.46 %** | 32.33 % |
+| `GET /api/events` | 23.87 % | 4.49 % | **28.37 %** | 37.13 % |
+| `GET /journal` | 21.95 % | 6.62 % | **28.57 %** | 41.24 % |
+
+Kotlin's own share **rises** on every endpoint — `/journal` nearly doubles — but the runtime
+bucket collapses further than Kotlin grows, so **their sum, which is the most a PGO arm could
+touch, falls to a uniform ~28.5 %** on all three work endpoints. The cheaper allocator removes
+work that was PGO's territory rather than moving work into it.
+
+**This is what fires A2.3**, the drop rule the owner wrote before the run that decided it: *if
+Kotlin self plus runtime stays under 40 % on every work endpoint, Route A, RQ5 and RQ6 are
+dropped.* On the pinned allocator the rule misses by 1.24 points on one endpoint; on the default
+it fires by more than eleven on all three. **The conclusion does not depend on which allocator
+the reader prefers**, which is the one thing the conditionality genuinely threatened.
 
 ## Where the CPU actually goes, which may outlast the question that was asked
 
@@ -229,10 +280,15 @@ said how to choose one.
 against a 5 % macro bar before the ruler was measured. At the measured bar of 9.3 % with four
 rounds, even a green RQ1 could not have cleared it.
 
-## What is not measured, and why
+## What was dropped, what it would take to resume, and what is moot
 
-**RQ3, RQ4, RQ5, RQ6.** Route B reaches the service's compiler — 71 MB of IR, instrumented in 9.3
-seconds — and fails at its linker for two reasons invisible on a microbenchmark:
+**RQ3, RQ4, RQ5, RQ6 are dropped by A2.3**, on the bucket measurement above, not on the two
+linker obstacles below. The distinction matters: the study is not reporting a question it could
+not open. It opened the question far enough to price it, and the price says not to pay it.
+
+The obstacles are recorded because **any future arm on this subject meets them first**. Route B
+reaches the service's compiler — 71 MB of IR, instrumented in 9.3 seconds — and fails at its
+linker for two reasons invisible on a microbenchmark:
 
 1. `undefined hidden symbol: _DYNAMIC`. The pinned arm links `-static`; the profile runtime's
    binary-id writer needs a dynamic executable. **The profile runtime and a fully static link are
@@ -254,10 +310,18 @@ separate and lesser concern. Corrected, with the plan that follows from it:
   point: supplying librdkafka's five archives only moved the failure to `sqlx4k`'s symbols, and
   there is no reason to think that is the last of them.
 
-**Whether to run it at all depends on the allocator.** If a paged allocator lifts Kotlin plus
-runtime to around 60 %, the probe is worth the work. If it does not, the ceiling and the per-call
-bound above are already the answer. [B-21](../backlog/B-21-rq0-the-two-numbers.md) and
-[B-22](../backlog/B-22-replay-the-linker-command.md).
+**That condition has since been tested and it failed.** The paragraph this replaces said the
+probe was worth the work *if* a paged allocator lifted Kotlin plus runtime to around 60 %. It
+lifts Kotlin's own share and lowers the sum, to ~28.5 %. The macro arms are dropped.
+
+**What stays open, and why.**
+
+| item | status after the drop | reason |
+|---|---|---|
+| [B-22](../backlog/B-22-replay-the-linker-command.md) — replay the linker command | **live**, and the last P0 | it is the recipe, not the probe: every future arm on a real Kotlin/Native service needs a link that neither goes through `-Xcompile-from-bitcode` nor links `-static` |
+| [B-21](../backlog/B-21-rq0-the-two-numbers.md) — RQ0's two numbers | **live**, P1 | RQ0's grey is the one verdict a small amount of work can still change; it needs B-22's binary |
+| [B-19](../backlog/B-19-stamp-the-commit-into-the-binary.md) — commit in the binary | **live**, P1 | provenance defect found twice in this study; it is cheap and it outlives the brief |
+| [B-23](../backlog/B-23-flattened-profile-control.md) — flattened profile | **moot** | it replaced arm A4, which is macro; and the question A4 asked is answered on the micro half by the uniform row above |
 
 **The GC log** RQ1 was to carry: `-Xruntime-logs=gc=info` is a compile-time flag the subject's
 build does not expose. The collector's *share* is measured by symbol; its pause and sweep times
