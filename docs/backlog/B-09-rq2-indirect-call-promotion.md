@@ -237,3 +237,37 @@ than from the pass. kotlinx-benchmark was not used: the harness is an in-process
 taking the best of five inside each run, with nine interleaved rounds around it — **a deviation
 from the brief's "kotlinx-benchmark on the native target", recorded as one rather than
 substituted quietly**.
+
+## Iteration 2 — 2026-09-21. The numbers had no host, and that reached a published article
+
+**B-09's logs record no host, no CPU and no session.** Every `ns/op` here was taken on some
+machine and the record does not say which. That is a provenance defect of the same family as the
+binary that answered `commit: unknown`, and it stayed invisible while all comparisons happened
+inside one run.
+
+**It stopped being invisible when a number from this item was compared with a number from
+elsewhere.** A blog post added a column for "the ordinary build, no PGO", measured fresh on the
+build box, beside this item's A0 and A2. The ordinary build looked **34 % faster than the PGO
+binary**, and the post published that as "as a way to make a Kotlin/Native program faster today,
+this is a loss". It was wrong: the two sets differ by a uniform 1.55–1.68× across every measure,
+which is a slower machine, not an effect.
+
+**Remeasured properly** — three builds, nine interleaved rounds, 99 % intervals, one machine and
+one session (`bench/three-arm.sh`, `logs/b-09/2026-09-21-three-arms-interleaved.txt`):
+
+| build | interface | virtual | no dispatch |
+|---|---:|---:|---:|
+| ordinary, no PGO | 1.066 ± 0.025 | 0.804 ± 0.031 | 0.486 ± 0.029 |
+| Route B, no profile | 1.071 ± 0.016 | 0.806 ± 0.028 | 0.494 ± 0.050 |
+| Route B, with profile | **0.959 ± 0.026** | **0.699 ± 0.036** | 0.498 ± 0.056 |
+
+- **The route is free within resolution.** All three of its intervals overlap the ordinary
+  build's — which retires this item's own "Route B's A0 is not the ordinary A0", itself an
+  artefact of comparing across machines.
+- **The effect survives and agrees**: −10.5 % and −13.4 % against Route B's own A0, against the
+  −11.2 % and −12.6 % first reported. The unit control separates from nothing anywhere.
+- **The level drifts ~20 % between sessions on one machine** (a control arm read 0.470 in one
+  session and 0.494 in another), so only numbers from a single interleaved run are comparable.
+
+**`bench/three-arm.sh` prints host, CPU and session on every run.** A cross-machine comparison is
+then visible in the log rather than in a published conclusion.

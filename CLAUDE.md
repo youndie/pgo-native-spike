@@ -56,6 +56,10 @@ way, and shows it doing so in the same log.
 - **Do not quote "user code is 4 % of CPU" as RQ1's prior.** It is application code only, on a
   JVM; RQ1's Kotlin bucket is application, libraries and stdlib alike. The boundaries differ and
   the arithmetic does not transfer in either direction.
+- **A table that draws numbers from two backlog items carries one line: same host, same run —
+  yes or no.** Twice now a figure from one protocol has been set beside a figure from another
+  and read as an effect; the second time it inverted a published conclusion, because B-09's logs
+  record no host at all. The line costs nothing and it is the check that was missing.
 - **Do not report a number without the run that produced it.** Every figure in a document has a
   path into `logs/`. A retraction is appended; the original is not edited away.
 - **Do not read rps as a verdict.** On this stack rps at small core counts is a sample rather than
