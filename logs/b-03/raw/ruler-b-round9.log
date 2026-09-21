@@ -3,10 +3,10 @@
   █ THRESHOLDS 
 
     http_req_duration
-    ✓ 'p(99)<250' p(99)=32.64ms
+    ✓ 'p(99)<250' p(99)=199.78ms
 
       {expected_response:true}
-      ✓ 'avg<100' avg=9.67ms
+      ✓ 'avg<100' avg=27.33ms
 
     http_req_failed
     ✓ 'rate<0.01' rate=0.00%
@@ -14,22 +14,22 @@
 
   █ TOTAL RESULTS 
 
-    checks_total.......: 5400    179.971061/s
+    checks_total.......: 5400    179.981624/s
     checks_succeeded...: 100.00% 5400 out of 5400
     checks_failed......: 0.00%   0 out of 5400
 
     ✓ accepted
 
     HTTP
-    http_req_duration..............: avg=9.67ms  p(50)=7.6ms  p(95)=21.93ms p(99)=32.64ms max=197.56ms
-      { expected_response:true }...: avg=9.67ms  p(50)=7.6ms  p(95)=21.93ms p(99)=32.64ms max=197.56ms
+    http_req_duration..............: avg=27.33ms p(50)=8.06ms p(95)=124.27ms p(99)=199.78ms max=1.12s
+      { expected_response:true }...: avg=27.33ms p(50)=8.06ms p(95)=124.27ms p(99)=199.78ms max=1.12s
     http_req_failed................: 0.00%  0 out of 5400
-    http_reqs......................: 5400   179.971061/s
+    http_reqs......................: 5400   179.981624/s
 
     EXECUTION
-    iteration_duration.............: avg=10.01ms p(50)=7.95ms p(95)=22.32ms p(99)=33.02ms max=197.79ms
-    iterations.....................: 5400   179.971061/s
-    vus............................: 1      min=1         max=5  
+    iteration_duration.............: avg=27.65ms p(50)=8.42ms p(95)=124.59ms p(99)=200.03ms max=1.12s
+    iterations.....................: 5400   179.981624/s
+    vus............................: 1      min=1         max=32 
     vus_max........................: 200    min=200       max=200
 
     NETWORK

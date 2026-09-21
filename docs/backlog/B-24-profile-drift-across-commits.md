@@ -33,28 +33,41 @@ profile does a typical commit cost?
 
 ## Iteration 1 — 2026-09-21. A profile survives a code change almost intact
 
-Trained on `6359a88`, applied to each revision's IR. 5 763 functions carry non-zero counts:
+Trained on `6359a88`, applied to each revision's IR. 5 763 functions carry non-zero counts and
+1 457 158 189 counters between them:
 
-| revision | what changed | applied | retained | hash mismatch | no longer a define |
-|---|---|---:|---:|---:|---:|
-| `6359a88` | nothing — self | 5 762 | **99.98 %** | 0 | 1 |
-| `c4ba99f` | build only, no source | 5 761 | **99.97 %** | 0 | 2 |
-| `5c701e4` | one feature commit | 5 757 | **99.90 %** | 3 | 3 |
-| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 5 739 | **99.58 %** | 8 | 16 |
+| revision | what changed | retained, **functions** | retained, **weight** | hash mismatch |
+|---|---|---:|---:|---:|
+| `6359a88` | nothing — self | 99.983 % | **100.000 %** | 0 |
+| `c4ba99f` | build only, no source | 99.965 % | **100.000 %** | 0 |
+| `5c701e4` | one feature commit | 99.896 % | **99.999 %** | 3 |
+| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 99.584 % | **99.968 %** | 8 |
 
 - **AC met** — four revisions, applied and mismatch counts for each.
-- **AC (control) met** — `c4ba99f` changes no source and retains 99.97 %, one function away from
-  the self-application. The measurement is not dominated by harness noise.
-- **`opt`'s own warnings track the reader**: 0, 0, 8, 15 against the reader's 0, 0, 3, 8. Not
-  equal — `opt` warns about zero-count functions too, the reader counts only non-zero ones — but
-  the same direction and order, from two independent counts.
+- **AC (control) met** — `c4ba99f` changes no source and retains **100.000 % by weight**.
+- **`opt`'s own warnings track the reader**: 0, 0, 8, 15 against 0, 0, 3, 8 — not equal, since
+  `opt` warns about zero-count functions too, but the same direction and order.
 
-**The answer to what the brief was worried about: generated names do not drift.** A profile
-trained on one revision still applies to **99.58 %** of its non-zero functions across a **minor
-Ktor version bump**, which is a larger change than a typical commit. Name mangling for lambdas
-and anonymous classes is stable enough that profile staleness is not the thing that limits how
-long a profile lives on this platform.
+**Weighting was added after review and it changes the reading.** Counting functions treats a cold
+lambda and a hot function alike. By counter weight the Ktor bump costs **0.032 %** rather than
+0.42 % — the loss is an order of magnitude smaller than the function count implies, because what
+stops matching is cold. `scripts/profile_applied.py` now reports both, with a control case.
+
+**Generated names do change, and iteration 1 of this item said they do not.** Of the 16 functions
+absent by name at the Ktor bump, **11 carry a generated-name marker** — every one an
+`ingestModule$2…` lambda, in the single module whose code actually changed. That is name
+instability under a code change, not gratuitous drift, and **their total weight is 19 counters of
+1.46 billion**.
+
+**The expensive losses are CFG changes in hot shared code.** The eight hash mismatches carry
+467 209 of the 468 374 lost counters, and `kotlinx.cinterop.DeferScope#executeAllDeferred` is
+442 333 of them alone. That — not naming — is what a framework bump costs a profile.
+
+**Direction.** The brief asks for the *next* three commits; the trained revision is the branch
+tip, so the three **preceding** ones are used. Name and hash agreement is symmetric between two
+revisions, but a forward test would additionally see names that only new code introduces, and
+this does not.
 
 **What this does not say.** RQ5's green is about *retained effect*, not retained coverage. A
-profile can apply to 99.58 % of functions and still be worth less, because the counts inside it
-describe a workload and a code shape that have moved. That half needs RQ3 and stays blocked.
+profile can apply to 99.968 % of the weight and still be worth less, because the counts inside it
+describe a workload and a code shape that have moved. That half needs RQ3.
