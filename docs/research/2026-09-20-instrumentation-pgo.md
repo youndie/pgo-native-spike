@@ -29,7 +29,7 @@ reason each was made. The evidence this study started from is
 | **RQ1** | What share of self CPU is Kotlin code? | **GREY** | **13.84–32.55 %** across four endpoints on the pinned build, at the rate A2.2 fixes. (An earlier 35.38 % is `/health/live` at 200 rps — a different working point, and splicing the two into one range was an error.) Also measured on the default allocator, where Kotlin's share rises and the sum with the runtime falls |
 | **RQ2** | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? | **GREEN**, on an arm the brief listed as a control | promotion and inlining in the IR; −11.2 % itable and −12.6 % vtable at 99 % confidence **on 90/10**. The pre-registered single-receiver case came in at −7.9 % and did not separate |
 | **RQ3/RQ4** | Macro effect on the service | **NOT MEASURED** | a toolchain blocker, not a rule: a profile-carrying module cannot pass Kotlin/Native's own LTO pipeline (`CG Profile`). The ceiling and the per-call bound both predict an effect below resolution, and that is a prediction, not a measurement |
-| **RQ5** | How long does a profile live? | **NOT MEASURED**, and **partly answered** | its green is *a fraction of the RQ3 effect*, so the same wall blocks it. But its structural half needed no macro arm: across a Ktor minor-version bump and four commits a profile keeps **99.683 % of its counter weight** (96.46 % of its functions — the losses concentrate in a few hot shared ones) |
+| **RQ5** | How long does a profile live? | **NOT MEASURED**, and **partly answered** | its green is *a fraction of the RQ3 effect*, so the same wall blocks it. But its structural half needed no macro arm: across the one framework-version transition measured (3.5.2 → 3.6.0, four commits) a profile keeps **99.683 % of its counter weight** (96.46 % of its functions — the losses concentrate in a few hot shared ones) |
 | **RQ6** | What does it cost in binary size? | **NOT MEASURED** | it needs a PGO binary that went through Kotlin/Native's own LTO. The one built with external LTO is 1.8 MB against 485 KB and is not comparable to anything |
 | — | The ruler | **2.92 %** per paired round | ±4.64 % at four counted rounds, ±2.44 % at eight. **Characterised on a statically linked binary**; a dynamically linked arm ran at roughly twice that and is not covered by it |
 
@@ -616,7 +616,9 @@ weight, against 0.42 % and 0.032 % for three ordinary commits. Hash mismatches g
 `opt`'s own warnings 15 → 170.
 
 **The conclusion survives the correction, with a bigger number.** 99.683 % of a profile's
-information still lands across a web-framework minor version and four commits. Profile staleness
+information still lands across a web-framework minor version and four commits — **on the one
+version transition measured**, which is a single sample and is not a rate for framework bumps in
+general. Profile staleness
 is not what limits how long a profile lives here — but the honest figure is ten times the one
 first reported, and it is attached to the right comparison now.
 
@@ -651,12 +653,29 @@ in the whole program.** Add or remove one anywhere — in this case through ordi
 commits, with **no dependency change at all** — and a shared stdlib function's control flow, and
 therefore its PGO hash, moves.
 
-**This is a platform property with no C or C++ equivalent, and it is the mechanism behind
-"CFG change in hot shared code".** A function's profile hash on Kotlin/Native is not a function
-of its own source; it is a function of the whole program's composition. Anyone planning profile
-reuse across builds should expect staleness to be triggered by changes that touch nothing they
-wrote — which is also why the loss concentrates in a handful of hot shared functions rather than
-spreading thinly.
+**The difference from C and C++ is the order of the passes, not the absence of the
+transformation.** C++ has the same class of whole-program rewriting — LTO and
+`-fwhole-program-vtables` also change a function's CFG according to what else is in the program.
+What differs is where the profile takes its key:
+
+- **In LLVM's C++ pipeline the hash is taken early** — before the main inliner and before
+  whole-program devirtualisation — so the function's own source fixes it.
+- **In Kotlin/Native closed-world devirtualisation happens in the frontend**, before LLVM IR
+  exists at all. Every instrumentation point reachable through `opt` is therefore *downstream*
+  of it.
+
+So the accurate statement is: **on this platform the whole-program transformation sits before
+the point at which the profile takes its key, and in C and C++ it sits after.** That is the
+mechanism behind "CFG change in hot shared code", and it means **a function's profile hash here
+is a property of the whole program's composition rather than of its own source.** Anyone
+planning profile reuse should expect staleness from changes that touch nothing they wrote, and
+it is why the loss concentrates in a handful of hot shared functions instead of spreading.
+
+**It also means this cannot be fixed at the LLVM level** — no choice of instrumentation point
+helps when the rewrite already happened upstream of all of them. The only lever is to disable
+the devirtualisation phase in the compiler, paying whatever it is worth in performance.
+`-Xdisable-phases` exists; **which phase name to pass, and what it costs, were not established
+here** — `-Xlist-phases` printed nothing on this version.
 
 The control holds: a build-only commit retains 100.000 % by weight, so none of this is harness
 noise. `opt`'s warnings track the reader independently at 0, 0, 8, 15, 170.
@@ -665,8 +684,8 @@ noise. `opt`'s warnings track the reader independently at 0, 0, 8, 15, 170.
 tip, so earlier ones are used. Name and hash agreement is symmetric between two revisions, but a
 forward test would additionally see names that only new code introduces, and this does not.
 
-**It is not RQ5.** Retained *coverage* is not retained *effect*: a profile can still apply to
-99.58 % of functions and be worth less, because the counts inside it describe a workload and a
+**It is not RQ5.** Retained *coverage* is not retained *effect*: a profile can still reach
+96.46 % of functions and 99.683 % of the counter weight and be worth less, because the counts inside it describe a workload and a
 code shape that have moved. That half needs RQ3.
 
 ## Open questions

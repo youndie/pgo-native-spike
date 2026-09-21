@@ -57,7 +57,8 @@ boundary costs an order of magnitude more: **0.317 % of weight against 0.032 %**
 mismatches against 8.
 
 The conclusion survives with a bigger number: **99.683 % of a profile's information lands across
-a framework minor version and four commits.**
+a framework minor version and four commits** — on the single transition measured, which is not a
+rate for framework bumps in general.
 
 ### Correction 2 — weighting, and "names do not drift" withdrawn
 
@@ -66,18 +67,35 @@ now also sums counters, with a control case. And of the 16 functions absent by n
 `f0e5980`, **11 carry a generated-name marker** — all `ingestModule$2…` lambdas in the module
 that changed — for a combined **19 counters of 1.46 billion**. Names do change; they are cold.
 
-### What moves a hot function's hash, confirmed in the IR
+### What moves a hot function's hash, confirmed in the IR and then in a clean build pair
 
 `DeferScope#executeAllDeferred` alone is **442 333 of the 468 374** counters lost at `f0e5980`.
 Its source did not change and neither did the Kotlin version. In `6359a88` the IR carries a
 two-arm `kclass` comparison over the deferred lambdas; in `f0e5980`, one arm and no comparison.
 
-**Kotlin/Native's closed-world devirtualisation expands `invoke` into a chain of type guards
-whose arm count tracks the set of defer-lambdas reachable in the whole program** — so ordinary
-feature commits, with no dependency change, move a stdlib function's control flow and its PGO
-hash. **A profile hash here is a property of the whole program's composition, not of the
-function's source**, which has no C or C++ equivalent and is why the loss concentrates in a few
-hot shared functions instead of spreading thinly.
+**Isolated afterwards**, because that pair differs by three commits: two trees from the same
+revision, differing **only** by one added `defer { }` lambda. Binary 20 169 472 → 20 170 456
+bytes, and two untouched stdlib symbols move (`logs/b-24/2026-09-21-devirtualisation.log`):
+
+| symbol | base | one extra lambda |
+|---|---:|---:|
+| `kotlinx.cinterop.ArenaBase#clearImpl` | 283 B | **331 B** |
+| `refTo$$inlined$usingPinned$1…getPointer$1.invoke` | 223 B | **297 B** |
+
+Both are the `DeferScope` machinery, neither was edited. **Kotlin/Native's closed-world
+devirtualisation expands `invoke` into a chain of type guards whose arm count tracks the set of
+lambdas reachable in the whole program**, so adding one anywhere rewrites shared stdlib code.
+
+**The difference from C and C++ is pass order, not the absence of the transformation.** C++ has
+LTO and `-fwhole-program-vtables` doing the same class of rewriting; what differs is that
+LLVM takes the profile hash **early, before the inliner and before whole-program
+devirtualisation**, whereas Kotlin/Native devirtualises **in the frontend, before LLVM IR
+exists** — so every `opt`-reachable instrumentation point is downstream of it. **A profile hash
+here is a property of the program's composition rather than of the function's source.**
+
+That also means it cannot be fixed by choosing a different instrumentation point. The only lever
+is disabling the phase: `-Xdisable-phases` exists, but **the phase name and its cost were not
+established** — `-Xlist-phases` printed nothing on 2.4.20.
 
 **Direction.** The brief asks for the *next* commits; the trained revision is the branch tip, so
 earlier ones are used. Agreement is symmetric, but a forward test would additionally see names

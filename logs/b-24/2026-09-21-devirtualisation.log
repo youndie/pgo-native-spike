@@ -1,0 +1,7 @@
+=== two trees differing ONLY by one added defer{} lambda ===
+base: 20169472 bytes    one extra defer lambda: 20170456 bytes
+=== untouched stdlib/cinterop symbols whose size changed ===
+  kfun:kotlinx.cinterop.ArenaBase#clearImpl(){}  0x000000000000011b -> 0x000000000000014b
+  kfun:kotlinx.cinterop.refTo$$inlined$usingPinned$1.refTo$$inlined$usingPinned$1$getPointer$1.invoke#internal  0x00000000000000df -> 0x0000000000000129
+=== host ===
+DESKTOP-85OS64M
