@@ -145,3 +145,17 @@ on the same process), so the workload is identical by construction. Full table i
 **Scope, stated rather than glossed:** this checks the *grammar*, on the microbenchmark. **RQ1's
 own buckets remain measured by one implementation**, because razves cannot run against a Ktor CIO
 process at all. The results document says so.
+
+## Option 4 also taken — 2026-09-21
+
+The limitation is now written down where the next person meets it:
+**[youndie/razves#7](https://github.com/youndie/razves/issues/7)**.
+
+One thing the issue adds that the measurement here did not: **razves already installs its handler
+with `SA_RESTART`**, which is the fix anyone would reach for, and `signal(7)` says it cannot
+work — `epoll_wait`, `poll`, `ppoll`, `select` and `pselect` are *never* restarted regardless of
+that flag. So there is no setting on razves's side that avoids this, which is why the issue asks
+for a documented limitation rather than a patch.
+
+The issue names no private repository: it describes the shape of the subject — a Kotlin/Native
+Ktor CIO server with SQLite on the request path — and not which one.

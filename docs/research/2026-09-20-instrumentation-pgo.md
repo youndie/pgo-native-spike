@@ -426,6 +426,12 @@ worth more than this study's cross-check: **no in-process signal-based profiler 
 Ktor CIO on Kotlin/Native** until that loop retries — and it is why `perf`, which samples from
 outside and delivers no signals, remains the only instrument that can answer RQ1 here.
 
+**And the obvious fix is already applied and cannot work.** razves installs its handler with
+`SA_RESTART`, which is what anyone would reach for; `signal(7)` lists `epoll_wait`, `epoll_pwait`,
+`poll`, `ppoll`, `select` and `pselect` as **never restarted regardless of that flag**. So no
+setting on the profiler's side avoids this, and the limitation is written up where the next
+person meets it: [youndie/razves#7](https://github.com/youndie/razves/issues/7).
+
 Everything short of the run works: the sampler resolves, links, and profiles an arithmetic
 control at `kotlin 100 %`, and the subject rebuilt with it costs **22 160 bytes** more than the
 pin.
