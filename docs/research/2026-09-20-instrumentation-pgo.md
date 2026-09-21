@@ -9,10 +9,11 @@ date: 2026-09-20
 # Instrumentation PGO for Kotlin/Native — results
 
 **Final.** **RQ0 is green on the macro subject**, which is the one thing the brief asked that
-this study can answer yes to. RQ5 and RQ6 were dropped by a rule declared before the measurement
-that decided it; **RQ3 and RQ4 were not — they are blocked in the toolchain and are reported as
-not measured**, because a question that could not be opened is a different thing from one that
-was priced and declined. Every number here
+this study can answer yes to. **Everything unmeasured here is unmeasured for one reason: a
+profile-carrying module cannot pass Kotlin/Native's own LTO pipeline**, so no PGO binary of the
+service was ever built. A2.3's drop rule exists and was declared in advance, but **it never fired
+on the subject** — only on a default-allocator build that is not the subject — so it decided
+nothing, and this document no longer leans on it. Every number here
 has a backlog item, a log directory and a command behind it; nothing is carried over from another
 project or inferred from a prior. The recipe is [`recipe/pgo.sh`](../../recipe/pgo.sh), which runs.
 
@@ -28,8 +29,8 @@ reason each was made. The evidence this study started from is
 | **RQ1** | What share of self CPU is Kotlin code? | **GREY** | **13.84–32.55 %** across four endpoints on the pinned build, at the rate A2.2 fixes. (An earlier 35.38 % is `/health/live` at 200 rps — a different working point, and splicing the two into one range was an error.) Also measured on the default allocator, where Kotlin's share rises and the sum with the runtime falls |
 | **RQ2** | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? | **GREEN**, on an arm the brief listed as a control | promotion and inlining in the IR; −11.2 % itable and −12.6 % vtable at 99 % confidence **on 90/10**. The pre-registered single-receiver case came in at −7.9 % and did not separate |
 | **RQ3/RQ4** | Macro effect on the service | **NOT MEASURED** | a toolchain blocker, not a rule: a profile-carrying module cannot pass Kotlin/Native's own LTO pipeline (`CG Profile`). The ceiling and the per-call bound both predict an effect below resolution, and that is a prediction, not a measurement |
-| **RQ5** | How long does a profile live? | **DROPPED** | by A2.3, which names it: Kotlin self plus runtime is under 40 % on every work endpoint of the default-allocator build |
-| **RQ6** | What does it cost in binary size? | **DROPPED** | by A2.3, which names it |
+| **RQ5** | How long does a profile live? | **NOT MEASURED**, and **partly answered** | its green is *a fraction of the RQ3 effect*, so the same wall blocks it. But its structural half needed no macro arm: a profile trained on one revision still applies to **99.58 %** of its non-zero functions across a Ktor minor-version bump |
+| **RQ6** | What does it cost in binary size? | **NOT MEASURED** | it needs a PGO binary that went through Kotlin/Native's own LTO. The one built with external LTO is 1.8 MB against 485 KB and is not comparable to anything |
 | — | The ruler | **2.92 %** per paired round | ±4.64 % at four counted rounds, ±2.44 % at eight |
 
 **Kill criterion 2 is moot** — it validates a fork as a baseline and there is no fork. Criteria 1,
@@ -103,9 +104,23 @@ difference: **+0.65 %, 95 % CI ±6.08 %** — below resolution.
 **The interval is the finding's own caveat, and it is about the ruler.** Per-round sd was
 **7.27 % against the ruler's 2.92 %** — two and a half times — so eight pairs bought ±6.08 %
 instead of ±2.44 %. The 5 % bar this study operates under rests on that 2.92 %, and **it did not
-reproduce here**. Two candidates, not separated: the stand drifts upward through a run, and the
-ruler was characterised on a `-static` binary and never on a dynamic one. Enough to exclude
-anything near the build flag's 19 %; not enough to separate 5 % from nothing.
+reproduce here**.
+
+**Three candidates, and two of them are weakened by runs already taken:**
+
+- *The stand drifts.* Weakened. **The allocator probe on the same stand reproduced the ruler
+  exactly** — ±2.33 % at eight rounds against the predicted ±2.44 %. Whatever inflated this run
+  is not a permanent property of the stand.
+- *jemalloc's own arm is noisy*, its decay purging calling `madvise` on a timer rather than with
+  the load. Weakened. **Per-arm sd is 5.84 % without the preload and 6.38 % with** — both arms
+  are noisy, so the preload is at most a small part of it.
+- *The dynamic binary is noisier, and the ruler never measured one.* **This is the candidate the
+  data point at.** The allocator probe used `xyk-pagedoff` and `xyk-paged`, both `-static`; this
+  one used a dynamically linked binary, and the ruler's 2.92 % was characterised on a static one.
+  The caveat is that the two probes ran at different times, so this is the leading explanation
+  rather than a demonstrated one.
+
+Enough to exclude anything near the build flag's 19 %; not enough to separate 5 % from nothing.
 
 **The original wording**: A0 against A0 with the allocator as the only difference,
 eight counted rounds, no toolchain work
@@ -305,10 +320,34 @@ components differ widely — Kotlin self spans 21.95–25.87 % and runtime 2.58�
 three times would show identical components, not identical sums. It is a coincidence, and it is
 reported as one rather than as a pattern.
 
-**And the remainder moved the wrong way for the simple story.** kernel plus libc is 67.9–69.2 %
-on the paged build against 56.7–64.4 % on the pinned one, even though `CustomAllocator` now
-forwards to libc less. Whatever that bucket is holding — SQLite and `sqlx4k` are the candidates,
-and the grammar mixes them with malloc — it is not accounted for here.
+**kernel plus libc reads higher on the paged build — 67.9–69.2 % against 56.7–64.4 % — and that
+is renormalisation, not a puzzle.** The allocator removes CPU, the denominator shrinks, and every
+untouched bucket's *share* rises by 1/(1−r). The multipliers say so directly: on `/hooks` Kotlin
+goes ×1.219 and kernel ×1.217 — **the same factor, for two buckets with nothing in common** —
+which puts r at 17.9 %, and the removed points reconcile as 9.0 from runtime plus 8.6 from libc's
+malloc, 17.6 in total. An earlier version of this document called the rise unaccounted for; it is
+accounted for, and the reviewer who did the arithmetic was right.
+
+**Converting the shares to absolute µs turns that into the strongest check in this study of
+whether the attribution grammar is telling the truth.** `/hooks` is the one endpoint with µs CPU
+per request on both builds:
+
+| bucket | pinned µs | paged µs | change |
+|---|---:|---:|---:|
+| **Kotlin self** | 1 735 | 1 748 | **+0.8 %** |
+| **kernel** | 2 726 | 2 742 | **+0.6 %** |
+| runtime | 908 | 174 | −80.8 % |
+| libc & native | 2 534 | 1 846 | −27.1 % |
+
+**The two buckets that cannot change do not change.** Same source, same compiler, same syscalls:
+Kotlin self and kernel move by under a point, which is what a correct attribution must produce
+and a broken one would not. And the two buckets the allocator touches account for **1 393 µs of
+the measured 1 419 µs gap** — a 26 µs residual, 1.8 %, which is the small buckets the table omits.
+
+A share table cannot show this and an absolute one does, which is an argument for reporting µs
+per bucket rather than percentages wherever both builds have a request cost. `/api/events` is
+also where the multipliers *disagree* — Kotlin ×1.455 against kernel ×1.337 — and that is the
+rate difference showing up, as it should.
 
 Kotlin's own share **rises** on every endpoint — `/journal` nearly doubles — but the runtime
 bucket collapses further than Kotlin grows, so **their sum, which is the most a PGO arm could
@@ -516,6 +555,36 @@ fact, and the arithmetic closes exactly: razves's `c` 202 = perf's libc 38 + 162
 **No published number changes.** RQ1's own buckets are still read by one sampler on the service,
 because razves cannot run there at all; what is now independently checked is the **grammar** they
 are read with, which is the part both subjects share.
+
+## RQ5's structural half, which needed no macro arm
+
+RQ5's green is *"at least two thirds of the RQ3 effect retained"*, so the wall blocks it. But the
+worry underneath it — that generated names for lambdas and anonymous classes drift between
+builds, and a profile goes stale on contact with a commit — is answerable with the reader from
+RQ0 and no new instrument at all (**B-24**, `logs/b-24/`).
+
+A profile trained on `6359a88`, applied to the IR of the revisions before it. 5 763 functions
+carry non-zero counts:
+
+| revision | what changed | applied | retained | hash mismatch |
+|---|---|---:|---:|---:|
+| `6359a88` | nothing — self | 5 762 | **99.98 %** | 0 |
+| `c4ba99f` | build only, no source | 5 761 | **99.97 %** | 0 |
+| `5c701e4` | one feature commit | 5 757 | **99.90 %** | 3 |
+| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 5 739 | **99.58 %** | 8 |
+
+**Generated names do not drift.** A minor version bump of the web framework — a larger change
+than a typical commit — costs **0.42 %** of the profile's non-zero functions. The control holds
+too: a build-only commit that changes no source retains 99.97 %, one function away from applying
+the profile to itself, so the figure is not harness noise. `opt`'s own warnings track the reader
+independently at 0, 0, 8, 15.
+
+**Profile staleness is not what limits how long a profile lives on this platform** — which is
+the transferable half of a question whose scored half is blocked.
+
+**It is not RQ5.** Retained *coverage* is not retained *effect*: a profile can still apply to
+99.58 % of functions and be worth less, because the counts inside it describe a workload and a
+code shape that have moved. That half needs RQ3.
 
 ## Open questions
 
