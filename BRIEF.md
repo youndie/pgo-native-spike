@@ -210,6 +210,28 @@ Route B applies the profile with an external `opt`, which takes the path on its 
 and A2.4 already made Route B the only route this study takes. If Route B proves unusable, Route
 A and the fork both return.
 
+### A3.3 — A2.3 was applied wider than it is written, and the results document is corrected
+
+Recorded 2026-09-21 after review. A2.3 says, in full: *"Route A, RQ5 and RQ6 are dropped."* The
+results document reported **RQ3 and RQ4 as dropped by it too**, and they are not in it — Route A
+is a *toolchain route*, which A2.4 had already made moot, not a research question. RQ3/RQ4 are
+the macro effect, answerable by either route.
+
+**What actually stopped RQ3/RQ4 is the `CG Profile` wall of A3.2**: a profile-carrying module
+cannot pass Kotlin/Native's own LTO pipeline, so the arm could not be built. Their status is
+**not measured, with a toolchain blocker named** — which is a different and weaker claim than
+"priced and declined", and the distinction is one the results document itself insists on.
+
+**Nothing about the conclusion moves.** The ceiling and the 0.16–0.18 ns per-call bound still
+predict an effect below resolution on this service; what changes is that this is a *prediction*
+rather than a *decision taken under a rule*. The rule still drops RQ5 and RQ6, which it names.
+
+**And A2.3 fires on one build only.** On the pinned subject `/journal` is 41.24 %, over the 40 %
+line, so the rule does not fire there; it fires on the default-allocator build, which is not the
+subject and was measured after the first outcome was known. The results document said the
+conclusion "does not depend on which allocator the reader prefers"; by the letter that is false
+and it has been corrected.
+
 ### A3.2 — that last clause has half fired: Route B's **use** arm is unusable on a service
 
 Recorded 2026-09-20 after [B-22](docs/backlog/B-22-replay-the-linker-command.md), and it
