@@ -8,9 +8,11 @@ date: 2026-09-20
 
 # Instrumentation PGO for Kotlin/Native — results
 
-**Final.** Every research question has a verdict, and the macro half was **dropped by a rule
-declared before the measurement that decided it** rather than left unfinished. **RQ0 is green on
-the macro subject**, which is the one thing the brief asked that this study can answer yes to. Every number here
+**Final.** **RQ0 is green on the macro subject**, which is the one thing the brief asked that
+this study can answer yes to. RQ5 and RQ6 were dropped by a rule declared before the measurement
+that decided it; **RQ3 and RQ4 were not — they are blocked in the toolchain and are reported as
+not measured**, because a question that could not be opened is a different thing from one that
+was priced and declined. Every number here
 has a backlog item, a log directory and a command behind it; nothing is carried over from another
 project or inferred from a prior. The recipe is [`recipe/pgo.sh`](../../recipe/pgo.sh), which runs.
 
@@ -23,11 +25,11 @@ reason each was made. The evidence this study started from is
 | RQ | Question | Verdict | |
 |---|---|---|---|
 | **RQ0** | Can a Kotlin/Native release binary write a `.profraw` that merges, and can the toolchain apply the resulting `.profdata`? | **GREEN** | **on the macro subject**: the profile merges IR-level from 4 480 real requests, and **5 762 of 5 763 functions with non-zero counts have it applied — 99.98 % against the 80 % line, 0 dropped on a hash mismatch**. On stock tools, with no fork |
-| **RQ1** | What share of self CPU is Kotlin code? | **GREY** | 13.84–35.38 % across four endpoints on the pinned build. Measured on the default allocator too, because the pin puts libc in the denominator: Kotlin's share rises, the sum with the runtime **falls** to ~28.5 %, and the conclusion holds either way |
+| **RQ1** | What share of self CPU is Kotlin code? | **GREY** | **13.84–32.55 %** across four endpoints on the pinned build, at the rate A2.2 fixes. (An earlier 35.38 % is `/health/live` at 200 rps — a different working point, and splicing the two into one range was an error.) Also measured on the default allocator, where Kotlin's share rises and the sum with the runtime falls |
 | **RQ2** | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? | **GREEN**, on an arm the brief listed as a control | promotion and inlining in the IR; −11.2 % itable and −12.6 % vtable at 99 % confidence **on 90/10**. The pre-registered single-receiver case came in at −7.9 % and did not separate |
-| **RQ3/RQ4** | Macro effect on the service | **DROPPED** | by A2.3: Kotlin self plus runtime is 28.4–28.6 % on every work endpoint, on **both** allocator builds |
-| **RQ5** | How long does a profile live? | **DROPPED** | same rule |
-| **RQ6** | What does it cost in binary size? | **DROPPED** | same rule |
+| **RQ3/RQ4** | Macro effect on the service | **NOT MEASURED** | a toolchain blocker, not a rule: a profile-carrying module cannot pass Kotlin/Native's own LTO pipeline (`CG Profile`). The ceiling and the per-call bound both predict an effect below resolution, and that is a prediction, not a measurement |
+| **RQ5** | How long does a profile live? | **DROPPED** | by A2.3, which names it: Kotlin self plus runtime is under 40 % on every work endpoint of the default-allocator build |
+| **RQ6** | What does it cost in binary size? | **DROPPED** | by A2.3, which names it |
 | — | The ruler | **2.92 %** per paired round | ±4.64 % at four counted rounds, ±2.44 % at eight |
 
 **Kill criterion 2 is moot** — it validates a fork as a baseline and there is no fork. Criteria 1,
@@ -62,6 +64,10 @@ effect this study measured for PGO.
 | `pagedAllocator=true` — the default | **6 756** |
 | paired, eight counted rounds | **+19.01 %**, 95 % CI **±2.33 %** |
 
+**The base, because a ratio without one is ambiguous:** 19.01 % is the *paired* estimator — the
+mean of the per-round differences, each as a share of its own pair. The two simple ratios of the
+means bracket it: the 1 419 µs gap is **21.0 %** of the cheaper arm and **17.4 %** of the dearer.
+
 **Nineteen percent of request CPU, from one build flag, with no compiler work** — against a macro
 threshold of 5 % and a best-case PGO effect of 11–13 % measured on a microbenchmark whose
 per-call bound says it is worth almost nothing at service scale.
@@ -71,14 +77,35 @@ It does not follow that the product should flip it: that setting is what survive
 that the memory criterion costs this service a fifth of its request CPU** — previously priced by
 the subject at 13 % of ingest throughput, and now measured larger on the CPU axis.
 
-**And a faster *system* malloc is not the answer either.** jemalloc under `LD_PRELOAD`, eight
-paired rounds on the same binary: **+0.65 %, 95 % CI ±6.08 %** — below resolution, against the
-build flag's 19.01 %. Two things worth keeping from it. **The pinned build is `-static`, so
-`LD_PRELOAD` is ignored entirely** — the service runs, answers 200, and jemalloc never enters its
-address space, which is the silent null this probe was designed to catch rather than report. And
-the run's own per-round sd was **7.27 % against the ruler's 2.92 %**, so eight pairs bought
-±6.08 % instead of ±2.44 %: enough to exclude anything near the build flag, not enough to
-separate 5 % from nothing.
+**And the mechanism names a question nobody has asked, which may be worth more than anything
+else in this document.** Resident memory under the paged allocator follows *a page per size class
+per thread*, so it is a function of **thread count**, not of live heap. Whether the paged
+allocator fits in 64 MiB **with fewer threads** has never been tested. If it does, the trade
+dissolves and the 19 % is recoverable — a cheaper question than anything PGO posed, and the
+natural RQ1 of the next study.
+
+**And a faster *system* malloc is not the answer either — but read what was measured.**
+
+**The pinned build is `-static`, so `LD_PRELOAD` is ignored entirely**: the service runs, answers
+200, and jemalloc appears **zero times in `/proc/<pid>/maps`**. A preload probe against the
+shipped binary measures nothing and would report it as "jemalloc does not help". **So the probe
+was run on a *dynamically linked* build of the same commit**, not on the pin — sound because the
+two builds' IR is byte-identical (B-21), so only the link differs.
+
+On that build the preload demonstrably took effect, which is the difference between a null and a
+no-op: **5 jemalloc regions in `/proc/<pid>/maps`**, and in a profile **68 samples in
+`libjemalloc.so.2`** with `calloc`, `free`, `malloc` and `posix_memalign` served by it and **no
+malloc-family symbol left in libc**.
+
+The result, eight paired rounds, both arms the same dynamic binary and the preload the only
+difference: **+0.65 %, 95 % CI ±6.08 %** — below resolution.
+
+**The interval is the finding's own caveat, and it is about the ruler.** Per-round sd was
+**7.27 % against the ruler's 2.92 %** — two and a half times — so eight pairs bought ±6.08 %
+instead of ±2.44 %. The 5 % bar this study operates under rests on that 2.92 %, and **it did not
+reproduce here**. Two candidates, not separated: the stand drifts upward through a run, and the
+ruler was characterised on a `-static` binary and never on a dynamic one. Enough to exclude
+anything near the build flag's 19 %; not enough to separate 5 % from nothing.
 
 **The original wording**: A0 against A0 with the allocator as the only difference,
 eight counted rounds, no toolchain work
@@ -113,12 +140,18 @@ Six guarded sites in the PGO arm against **zero** in A0. Nine interleaved rounds
 **Both controls of known outcome hold.** Uniform rotation gains nothing, exactly as the measured
 `icp-remaining-percent-threshold = 30` predicts for eight receivers at 12.5 % each.
 
-**That same row also excludes the rival explanation, which was going to need its own arm.** The
-worry behind arm A4 is that a PGO build is simply a *different* build — new layout, new inlining
-decisions — and that any rebuild would move the number. Here it cannot be that: the uniform and
-90/10 measurements come from **the same pair of binaries**, so a layout or rebuild effect would
-have to move both. It moves one, in the direction promotion predicts, and leaves the other
-slightly slower. **The gain is profile-guided.**
+**And the rival explanation — that a PGO build is simply a *different* build, and any rebuild
+would move the number — is excluded, in this order of strength.**
+
+1. **The IR carries the mechanism at the benchmark's own sites**: a guard against the dominant
+   target and the callee's body inlined behind it, six such sites against zero in A0. A rebuild
+   does not produce that shape; a profile does.
+2. **The unit control moves by +0.1 %** — the same arithmetic with no dispatch at all. A layout
+   or codegen effect large enough to explain −11 % would have to leave that untouched.
+3. Supporting only: uniform and 90/10 come from the same pair of binaries, so a whole-binary
+   effect would move both. This is weaker than it first looks — **layout effects are local**, a
+   loop's alignment can change in one measurement and not another — which is why it is third
+   rather than first.
 
 **But the arm that carries the verdict is not the pre-registered one, and no amendment moved it.**
 The brief's RQ2 describes sites with "one receiver at run time"; 90/10 was listed as a *control*.
@@ -128,7 +161,7 @@ shapes — but it clears it on the control arm, and the first version of this do
 that without saying so.
 
 **And 90/10 gains more than a single receiver does** (−11.2 % against −7.9 %, the latter not
-separating). Not an inversion, and the reason is the most transferable thing here:
+separating). Not an inversion, and what follows is a hypothesis rather than a finding:
 
 > **Hypothesis, not a finding: promotion may help most where the hardware helps least.** With one
 > receiver the indirect-branch predictor is already perfect and the guard only adds a compare; at
@@ -172,7 +205,7 @@ uses the link line of a non-static build — sound because **the two builds' IR 
 checked rather than assumed, so `staticLink` cannot reach what the profile is about.
 
 **What green does not claim.** The condition says *in the rebuilt IR*, and that is what was
-measured. A rebuilt *binary* carrying the profile is blocked by the `CG Profile` wall above, and
+measured. A rebuilt *binary* carrying the profile is blocked by the `CG Profile` wall described below, and
 RQ0's green does not ask for one.
 
 **The earlier grey, for the record.** The first version of this document called RQ0 green on the
@@ -196,10 +229,10 @@ Both numbers now exist on both subjects.
 | **... of those, profile applied** | **170** |
 | **... dropped on a hash mismatch** | **0** |
 
-So on the subject the item was re-scoped to, the profile applies essentially completely. **RQ0
-stays grey**, because the brief's green names the macro subject and the macro subject needs
-[B-22](../backlog/B-22-replay-the-linker-command.md)'s link.
-[B-21](../backlog/B-21-rq0-the-two-numbers.md) is now that one step, not three.
+So on the microbenchmark the profile applies essentially completely. The macro subject was
+measured later, through B-22's replayed link, and gives the 99.98 % in the verdict table —
+**that is what made RQ0 green.** The grey described here is the state this document reported
+before that run, kept because a retraction is appended rather than edited away.
 
 **And the recipe is a script that a reader can run**: [`recipe/pgo.sh`](../../recipe/pgo.sh),
 exercised end to end on a host that had built nothing in this study. **Its two load-bearing
@@ -254,12 +287,28 @@ The ceiling above sits on `pagedAllocator=false`, so the obvious objection is th
 build might leave PGO more room. It was measured, at rates re-derived from the knees the paged
 build actually reaches:
 
-| endpoint | Kotlin self | runtime | **self + runtime** | paged-off was |
-|---|---:|---:|---:|---:|
-| `GET /health/live` | 42.29 % | 5.15 % | 47.43 % | 50.38 % |
-| `POST /hooks/{id}` | 25.87 % | 2.58 % | **28.46 %** | 32.33 % |
-| `GET /api/events` | 23.87 % | 4.49 % | **28.37 %** | 37.13 % |
-| `GET /journal` | 21.95 % | 6.62 % | **28.57 %** | 41.24 % |
+| endpoint | rate | samples | Kotlin self | runtime | **self + runtime** | kernel | libc & native |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `GET /health/live` | 2 400 | 83 127 | 42.29 % | 5.15 % | 47.43 % | 35.55 % | 16.28 % |
+| `POST /hooks/{id}` | 240 | 53 191 | 25.87 % | 2.58 % | **28.46 %** | 40.59 % | 27.33 % |
+| `GET /api/events` | 180 | 52 757 | 23.87 % | 4.49 % | **28.37 %** | 19.83 % | 49.37 % |
+| `GET /journal` | 144 | 45 536 | 21.95 % | 6.62 % | **28.57 %** | 21.09 % | 48.01 % |
+
+Unresolved is **0.00 %** on every row. **The rates are not the pinned build's** — they are
+re-derived from the knees the paged build reaches, which are higher — so the two tables are not
+a like-for-like comparison of shares. That matters, because this study's own data show shares
+move with rate: `/health/live` reads 32.55 % Kotlin at 960 rps and 35.38 % at 200.
+
+**Three sums landing within 0.21 points of each other deserves suspicion, so here is why it is
+not an artefact**: the rows come from different captures with different sample counts, and the
+components differ widely — Kotlin self spans 21.95–25.87 % and runtime 2.58–6.62 %. One file read
+three times would show identical components, not identical sums. It is a coincidence, and it is
+reported as one rather than as a pattern.
+
+**And the remainder moved the wrong way for the simple story.** kernel plus libc is 67.9–69.2 %
+on the paged build against 56.7–64.4 % on the pinned one, even though `CustomAllocator` now
+forwards to libc less. Whatever that bucket is holding — SQLite and `sqlx4k` are the candidates,
+and the grammar mixes them with malloc — it is not accounted for here.
 
 Kotlin's own share **rises** on every endpoint — `/journal` nearly doubles — but the runtime
 bucket collapses further than Kotlin grows, so **their sum, which is the most a PGO arm could
@@ -268,9 +317,19 @@ work that was PGO's territory rather than moving work into it.
 
 **This is what fires A2.3**, the drop rule the owner wrote before the run that decided it: *if
 Kotlin self plus runtime stays under 40 % on every work endpoint, Route A, RQ5 and RQ6 are
-dropped.* On the pinned allocator the rule misses by 1.24 points on one endpoint; on the default
-it fires by more than eleven on all three. **The conclusion does not depend on which allocator
-the reader prefers**, which is the one thing the conditionality genuinely threatened.
+dropped.*
+
+**And it fires on one build only, which is worth stating precisely rather than rounding off.** On
+the **pinned** build — the subject — the rule **does not fire**: `/journal` is 41.24 %, over the
+40 % line by 1.24 points. It fires on the **default-allocator** build, which is not the subject
+and was measured after the first outcome was known. An earlier version of this document said the
+conclusion "does not depend on which allocator the reader prefers"; by the letter of the rule
+that is false, and the reviewer was right to catch it.
+
+**What does hold for both builds is the substantive argument rather than the rule**: the ceiling
+says the bucket PGO can touch is 28–41 % depending on build and endpoint, and the per-call bound
+below says promotion needs ~460 000 promoted calls per request to move 1 % of this service's
+request. Those two survive either allocator. The *rule* does not.
 
 ## Where the CPU actually goes, which may outlast the question that was asked
 
@@ -391,14 +450,19 @@ would plausibly have fixed.
 probe was worth the work *if* a paged allocator lifted Kotlin plus runtime to around 60 %. It
 lifts Kotlin's own share and lowers the sum, to ~28.5 %. The macro arms are dropped.
 
-**What stays open, and why.**
+**What became of each, now that the backlog is closed.**
 
-| item | status after the drop | reason |
-|---|---|---|
-| [B-22](../backlog/B-22-replay-the-linker-command.md) — replay the linker command | **live**, and the last P0 | it is the recipe, not the probe: every future arm on a real Kotlin/Native service needs a link that neither goes through `-Xcompile-from-bitcode` nor links `-static` |
-| [B-21](../backlog/B-21-rq0-the-two-numbers.md) — RQ0's two numbers | **live**, P1 | RQ0's grey is the one verdict a small amount of work can still change; it needs B-22's binary |
-| [B-19](../backlog/B-19-stamp-the-commit-into-the-binary.md) — commit in the binary | **live**, P1 | provenance defect found twice in this study; it is cheap and it outlives the brief |
-| [B-23](../backlog/B-23-flattened-profile-control.md) — flattened profile | **moot** | it replaced arm A4, which is macro; and the question A4 asked is answered on the micro half by the uniform row above |
+| item | outcome |
+|---|---|
+| B-22 — replay the linker command | **done.** The replay reproduces the ordinary build **byte for byte**, on the service as well as on a toy. It is what made the training binary, and RQ0's green, possible |
+| B-21 — RQ0's two numbers | **done**, on the macro subject: 5 762 of 5 763, 0 hash mismatches |
+| B-19 — commit in the binary | **done**; the upstream half is open for review as youndie/xyk#8 |
+| B-23 — flattened profile | **dropped as moot**: it replaced arm A4, which is macro, and the question A4 asked is answered on the micro half |
+| B-15 — a second sampler | **done on the microbenchmark, impossible on the service**: an in-process signal sampler kills Ktor CIO through an unretried `EINTR` in `pselect` |
+| B-18 — the allocator probe | **done**, and outside the verdicts |
+
+**What is still not measured is RQ3/RQ4**, and the obstacle is the `CG Profile` wall rather than
+a rule or a budget.
 
 **The GC log** RQ1 was to carry: `-Xruntime-logs=gc=info` is a compile-time flag the subject's
 build does not expose. The collector's *share* is measured by symbol; its pause and sweep times
@@ -459,8 +523,17 @@ are read with, which is the part both subjects share.
 frame-pointer capture profiles without trouble — 11 990 stacks, every one carrying a Kotlin frame
 — returns **zero stacks** under dwarf. Three candidate mechanisms were ruled out: `.eh_frame` is
 present and large (1.35 MB, 269 296 entries), this `perf` reports `dwarf-unwind: [ on ]` with
-libdw, and the stack-dump size was tested from 2048 to 16384 bytes. **The cause is unknown**, and
-it matters because the inclusive column depends on it.
+libdw, and the stack-dump size was tested from 2048 to 16384 bytes. **A fourth candidate has since been ruled out**: the unwinder's lookup table is present and
+well-formed — `.eh_frame_hdr` is 206 412 bytes, `.eh_frame` 1 353 176, and the `PT_GNU_EH_FRAME`
+segment that tells the unwinder where to find them exists. **The cause is unknown**, and it
+matters because the inclusive column depends on it.
+
+**Is the doubled `CG Profile` flag avoidable by replaying codegen, the way the link was?** An
+untested lead: `clang` may add the `CGProfile` pass only with the integrated assembler, in which
+case the bitcode-to-object step could be reproduced externally — through `llc`, or by pushing a
+clang flag in via `-Xoverride-konan-properties` — exactly as the link command was replayed. Both
+arms would have to take the identical path for the comparison to mean anything. This is the one
+lead that could still open RQ3/RQ4.
 
 **Why is the Route B binary 76 % larger and 3.7 % cheaper than the retired one?** GLOBAL symbols
 go 840 to 10 884 while Kotlin functions, C++ and Rust barely move. The cause cannot be
