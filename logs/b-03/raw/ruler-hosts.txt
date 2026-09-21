@@ -2,6 +2,6 @@ subject:   ubuntu-8gb-nbg1-1 4 ldd (Ubuntu GLIBC 2.43-2ubuntu2.4) 2.43
 generator: ubuntu-8gb-nbg1-2 4 k6 v1.4.1-release (commit/8cc106e574, go1.25.4, linux/amd64) 
 arm a:     xyk-dyn-6359a88  19590808 bytes, mtime 2026-09-20 22:28:51.178321224 +0000
 arm b:     xyk-dyn-6359a88  19590808 bytes, mtime 2026-09-20 22:28:51.178321224 +0000
-env a:     (none)
-env b:     LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
+env a:     setarch -R env
+env b:     setarch -R env
 mode: ruler  rate: 180  duration: 30s  rounds: 9  connections: 200

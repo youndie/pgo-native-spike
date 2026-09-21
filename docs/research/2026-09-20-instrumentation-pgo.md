@@ -117,8 +117,28 @@ reproduce here**.
 - *The dynamic binary is noisier, and the ruler never measured one.* **This is the candidate the
   data point at.** The allocator probe used `xyk-pagedoff` and `xyk-paged`, both `-static`; this
   one used a dynamically linked binary, and the ruler's 2.92 % was characterised on a static one.
-  The caveat is that the two probes ran at different times, so this is the leading explanation
-  rather than a demonstrated one.
+
+**The mechanism offered for it — ASLR moving a PIE's load address every run, so alignment and
+aliasing change between rounds — was tested, and the test could not resolve it.** The same
+dynamic binary, both arms, eight counted rounds under `setarch -R`:
+
+| | paired sd | 95 % CI for that sd |
+|---|---:|---|
+| ASLR on | 7.27 % | [4.81, 14.80] |
+| ASLR off | **5.93 %** | [3.92, 12.07] |
+| the ruler, static binary | 2.92 % | — |
+
+**Those intervals overlap almost entirely.** An sd estimated from eight pairs is a wide thing,
+and a 1.2× difference between two such estimates is not a result — this study's own rule about
+one run per variant applies to spreads as much as to means. What can be said: every per-arm
+figure moved down together (5.84 % and 6.38 % on, against 3.92 % and 4.10 % off), which is the
+direction the mechanism predicts, and **even with ASLR disabled the dynamic binary sits at
+3.9–4.1 % against the static ruler's 2.92 %**. So ASLR is not shown to be the cause and is not
+sufficient as a fix.
+
+**What that leaves for the recipe** is the conservative reading rather than the explanation: a
+measured arm on a dynamically linked binary should not assume the ruler, and needs either its
+own characterisation or more rounds.
 
 Enough to exclude anything near the build flag's 19 %; not enough to separate 5 % from nothing.
 
