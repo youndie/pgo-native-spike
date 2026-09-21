@@ -1,0 +1,61 @@
+=== 6359a88  opt hash-mismatch warnings: 0 ===
+defines in the module:                 25173
+functions in the profile:              13285
+... with a non-zero counter:           5763
+... of those, profile applied:         5762
+... of those, dropped:                 1
+      still a define -> hash mismatch: 0
+      no longer a define -> inlined or not emitted: 1
+        absent:   out;
+=== c4ba99f  opt hash-mismatch warnings: 0 ===
+defines in the module:                 25173
+functions in the profile:              13285
+... with a non-zero counter:           5763
+... of those, profile applied:         5761
+... of those, dropped:                 2
+      still a define -> hash mismatch: 0
+      no longer a define -> inlined or not emitted: 2
+        absent:   _696f2e6769746875622e796f756e6469652e78796b3a7365727665722f686f6d652f796f756e6469652f78796b2f7365727
+        absent:   out;
+=== 5c701e4  opt hash-mismatch warnings: 8 ===
+defines in the module:                 25153
+functions in the profile:              13285
+... with a non-zero counter:           5763
+... of those, profile applied:         5757
+... of those, dropped:                 6
+      still a define -> hash mismatch: 3
+      no longer a define -> inlined or not emitted: 3
+        mismatch: kfun:io.github.youndie.xyk#getServerConfig(){}io.github.youndie.xyk.ServerConfig
+        mismatch: kfun:io.github.youndie.xyk#main(){}
+        mismatch: kfun:kotlinx.coroutines.CoroutineDispatcher#dispatchYield(kotlin.coroutines.CoroutineContext;kotlinx
+        absent:   _696f2e6769746875622e796f756e6469652e78796b3a7365727665722f686f6d652f796f756e6469652f78796b2f7365727
+        absent:   kfun:io.github.youndie.xyk.ServerConfig#<init>(kotlin.Int;kotlin.String;kotlin.String;kotlin.Boolean
+        absent:   out;
+=== f0e5980  opt hash-mismatch warnings: 15 ===
+defines in the module:                 24500
+functions in the profile:              13285
+... with a non-zero counter:           5763
+... of those, profile applied:         5739
+... of those, dropped:                 24
+      still a define -> hash mismatch: 8
+      no longer a define -> inlined or not emitted: 16
+        mismatch: kfun:io.github.youndie.xyk#getServerConfig(){}io.github.youndie.xyk.ServerConfig
+        mismatch: kfun:io.github.youndie.xyk#main(){}
+        mismatch: kfun:kotlinx.cinterop.DeferScope#executeAllDeferred(){}
+        mismatch: kfun:kotlinx.coroutines.CoroutineDispatcher#dispatchYield(kotlin.coroutines.CoroutineContext;kotlinx
+        mismatch: kfun:kotlinx.serialization.json#Json(kotlinx.serialization.json.Json;kotlin.Function1<kotlinx.serial
+        mismatch: out;kfun:io.github.youndie.xyk.ingest.domain.AcceptEventUseCase.$invokeCOROUTINE$0.invokeSuspend#int
+        mismatch: out;kfun:io.github.youndie.xyk.main$1.main$1$invoke$3.invoke#internal
+        mismatch: out;kfun:io.ktor.network.util.getAddressInfo$$inlined$memScoped$1.invoke#internal
+        absent:   _696f2e6769746875622e796f756e6469652e78796b3a7365727665722f686f6d652f796f756e6469652f78796b2f7365727
+        absent:   kfun:io.github.youndie.xyk.ServerConfig#<init>(kotlin.Int;kotlin.String;kotlin.String;kotlin.Boolean
+        absent:   kfun:io.github.youndie.xyk.ingest#ingestModule(io.github.smyrgeorge.sqlx4k.sqlite.ISQLite;kotlin.Lon
+        absent:   kfun:io.github.youndie.xyk.ingest.domain.AcceptEventUseCase#<init>(io.github.youndie.xyk.ingest.doma
+        absent:   out;
+        absent:   out;kfun:io.github.youndie.xyk.ingest.ingestModule$2.$<bridge-DNN>invoke(org.koin.core.module.Module
+        absent:   out;kfun:io.github.youndie.xyk.ingest.ingestModule$2.<init>#internal
+        absent:   out;kfun:io.github.youndie.xyk.ingest.ingestModule$2.ingestModule$2$invoke$1.<init>#internal
+        absent:   out;kfun:io.github.youndie.xyk.ingest.ingestModule$2.ingestModule$2$invoke$1.invoke#internal
+        absent:   out;kfun:io.github.youndie.xyk.ingest.ingestModule$2.ingestModule$2$invoke$2.invoke#internal
+=== host ===
+DESKTOP-85OS64M

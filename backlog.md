@@ -44,7 +44,7 @@ an item proposing either does not belong in this file.
 
 No open tasks.
 
-## Closed (23)
+## Closed (24)
 
 **The stand, before any compiler work**
 
@@ -89,6 +89,10 @@ No open tasks.
 **The deliverable**
 
 - [B-13](docs/backlog/B-13-publish-the-result.md) `[x]` - Publish the result, including the parts that were not measured
+
+**stage-5-durability**
+
+- [B-24](docs/backlog/B-24-profile-drift-across-commits.md) `[x]` - RQ5's structural half: how much of a profile survives the next commits
 
 <!-- END INDEX -->
 
