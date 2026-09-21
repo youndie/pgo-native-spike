@@ -441,13 +441,20 @@ said how to choose one.
 against a 5 % macro bar before the ruler was measured. At the measured bar of 9.3 % with four
 rounds, even a green RQ1 could not have cleared it.
 
-## What was dropped, what it would take to resume, and what is moot
+## What was not measured, what blocked it, and what is moot
 
-**RQ3, RQ4, RQ5, RQ6 are dropped by A2.3**, on the bucket measurement above, not on the two
-linker obstacles below. The distinction matters: the study is not reporting a question it could
-not open. It opened the question far enough to price it, and the price says not to pay it.
+**RQ3, RQ4, RQ5 and RQ6 are all not measured, and all for the same reason: no PGO binary of the
+service could be built.** An earlier version of this section said they were *dropped by A2.3* on
+the bucket measurement, and that was wrong twice over — A2.3 names only Route A, RQ5 and RQ6, and
+it does not fire on the subject at all (`/journal` is 41.24 % against its 40 % line). **So the
+study is reporting questions it could not open, and says so** rather than presenting a blocker as
+a decision.
 
-The obstacles are recorded because **any future arm on this subject meets them first**. Route B
+**What the ceiling and the per-call bound still give is a prediction, not a verdict**: at a
+28–41 % bucket and 0.16–0.18 ns per promoted call, the expected macro effect is below this
+stand's resolution. That is worth stating and is not worth confusing with a measurement.
+
+The obstacles below are recorded because **any future arm on this subject meets them first**. Route B
 reaches the service's compiler — 71 MB of IR, instrumented in 9.3 seconds — and fails at its
 linker for two reasons invisible on a microbenchmark:
 
