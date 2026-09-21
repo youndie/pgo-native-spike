@@ -29,7 +29,7 @@ reason each was made. The evidence this study started from is
 | **RQ1** | What share of self CPU is Kotlin code? | **GREY** | **13.84–32.55 %** across four endpoints on the pinned build, at the rate A2.2 fixes. (An earlier 35.38 % is `/health/live` at 200 rps — a different working point, and splicing the two into one range was an error.) Also measured on the default allocator, where Kotlin's share rises and the sum with the runtime falls |
 | **RQ2** | Does indirect call promotion fire on Kotlin dispatch, and what is it worth? | **GREEN**, on an arm the brief listed as a control | promotion and inlining in the IR; −11.2 % itable and −12.6 % vtable at 99 % confidence **on 90/10**. The pre-registered single-receiver case came in at −7.9 % and did not separate |
 | **RQ3/RQ4** | Macro effect on the service | **NOT MEASURED** | a toolchain blocker, not a rule: a profile-carrying module cannot pass Kotlin/Native's own LTO pipeline (`CG Profile`). The ceiling and the per-call bound both predict an effect below resolution, and that is a prediction, not a measurement |
-| **RQ5** | How long does a profile live? | **NOT MEASURED**, and **partly answered** | its green is *a fraction of the RQ3 effect*, so the same wall blocks it. But its structural half needed no macro arm: across a Ktor minor-version bump a profile trained on one revision keeps **99.968 % of its counter weight** (99.58 % of its functions — the losses are cold) |
+| **RQ5** | How long does a profile live? | **NOT MEASURED**, and **partly answered** | its green is *a fraction of the RQ3 effect*, so the same wall blocks it. But its structural half needed no macro arm: across a Ktor minor-version bump and four commits a profile keeps **99.683 % of its counter weight** (96.46 % of its functions — the losses concentrate in a few hot shared ones) |
 | **RQ6** | What does it cost in binary size? | **NOT MEASURED** | it needs a PGO binary that went through Kotlin/Native's own LTO. The one built with external LTO is 1.8 MB against 485 KB and is not comparable to anything |
 | — | The ruler | **2.92 %** per paired round | ±4.64 % at four counted rounds, ±2.44 % at eight. **Characterised on a statically linked binary**; a dynamically linked arm ran at roughly twice that and is not covered by it |
 
@@ -593,44 +593,77 @@ worry underneath it — that generated names for lambdas and anonymous classes d
 builds, and a profile goes stale on contact with a commit — is answerable with the reader from
 RQ0 and no new instrument at all (**B-24**, `logs/b-24/`).
 
-A profile trained on `6359a88`, applied to the IR of the revisions before it. 5 763 functions
-carry non-zero counts:
+A profile trained on `6359a88`, applied to the IR of earlier revisions. **Each row is the
+distance from the trained revision, not from its neighbour** — `c62412d` differs by four commits,
+not by one. 5 763 functions carry non-zero counts and 1 457 158 189 counters between them:
 
-| revision | what changed | retained, **functions** | retained, **counter weight** | hash mismatch |
-|---|---|---:|---:|---:|
-| `6359a88` | nothing — self | 99.983 % | **100.000 %** | 0 |
-| `c4ba99f` | build only, no source | 99.965 % | **100.000 %** | 0 |
-| `5c701e4` | one feature commit | 99.896 % | **99.999 %** | 3 |
-| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 99.584 % | **99.968 %** | 8 |
+| revision | Ktor | distance | retained, **functions** | retained, **weight** | hash mismatch |
+|---|---|---|---:|---:|---:|
+| `6359a88` | 3.6.0 | self | 99.983 % | **100.000 %** | 0 |
+| `c4ba99f` | 3.6.0 | 1 commit, build only | 99.965 % | **100.000 %** | 0 |
+| `5c701e4` | 3.6.0 | 2 commits | 99.896 % | **99.999 %** | 3 |
+| `f0e5980` | 3.6.0 | 3 commits | 99.584 % | **99.968 %** | 8 |
+| **`c62412d`** | **3.5.2** | **4 commits, across the version boundary** | **96.460 %** | **99.683 %** | **78** |
 
-**Counting functions understates retention here, and the weighted column is the one that
-matters.** A lost cold lambda and a lost hot function are not the same loss. Weighted by the
-counters the profile actually carries, the Ktor bump costs **0.032 %** — 468 374 of
-1 457 158 189 — an order of magnitude *less* than the function count suggests, because what
-stops matching is cold.
+**The last row was missing, and without it this section claimed something it had not measured.**
+An earlier version labelled `f0e5980` as "Ktor 3.5.2 → 3.6.0". It is the commit that *introduced*
+3.6.0, so it and every revision after it carry the same version — **the bump was on neither side
+of that comparison**. `c62412d` is the one before it, and is the only row here that crosses a
+framework version.
 
-**Generated names do change, and an earlier version of this document was wrong to say they do
-not.** Of the 16 functions that disappear by name at the Ktor bump, **11 carry a generated-name
-marker** — all of them `ingestModule$2…` lambdas, in the one module whose code actually changed.
-That is name instability *under a code change*, which is expected; it is not gratuitous drift.
-**Their combined weight is 19 counters out of 1.46 billion.**
+**Crossing it costs an order of magnitude more**: 3.54 % of functions and **0.317 %** of counter
+weight, against 0.42 % and 0.032 % for three ordinary commits. Hash mismatches go 8 → 78 and
+`opt`'s own warnings 15 → 170.
 
-**What actually costs the profile at a framework bump is CFG change in hot shared code, not
-names.** The eight hash mismatches carry 467 209 of the 468 374 lost counters, and one function
-— `kotlinx.cinterop.DeferScope#executeAllDeferred` — is 442 333 of them by itself.
+**The conclusion survives the correction, with a bigger number.** 99.683 % of a profile's
+information still lands across a web-framework minor version and four commits. Profile staleness
+is not what limits how long a profile lives here — but the honest figure is ten times the one
+first reported, and it is attached to the right comparison now.
 
-The control holds: a build-only commit that changes no source retains 100.000 % by weight, so the
-figure is not harness noise. `opt`'s own warnings track the reader independently at 0, 0, 8, 15.
+**Counting functions understates retention, which is why the weighted column leads.** A lost cold
+lambda and a lost hot function are not the same loss; weighting separates them.
 
-**Profile staleness is not what limits how long a profile lives on this platform** — 99.968 % of
-the information survives a framework minor bump — which is the transferable half of a question
-whose scored half is blocked.
+**Generated names do change, and an earlier version of this document said they do not.** Of the
+16 functions absent by name at `f0e5980`, **11 carry a generated-name marker** — all
+`ingestModule$2…` lambdas, in the module whose code changed. That is name instability under a
+code change, not gratuitous drift, and their combined weight is **19 counters of 1.46 billion**.
 
-**Direction, stated because the brief said otherwise.** The brief asks for the *next* three
-commits; the trained revision is the tip of the branch, so the three **preceding** ones are used.
-For name and CFG-hash agreement the relation is symmetric — two revisions either match or they
-do not — but a forward test would additionally catch names that only *new* code introduces, and
-this does not.
+## What actually moves a hot function's hash, and it is not its source
+
+`kotlinx.cinterop.DeferScope#executeAllDeferred` is **442 333 of the 468 374 counters lost at
+`f0e5980`** — one stdlib function, most of the damage. Its source did not change and neither did
+the Kotlin version. The IR says why:
+
+```llvm
+; 6359a88 — two arms
+%8 = icmp eq ptr %7, @"kclass:io.ktor.network.util.getAddressInfo$$inlined$memScoped$1#internal"
+br i1 %8, label %when_case1, label %when_next2
+  call void @"kfun:io.ktor.network.util.getAddressInfo$$inlined$memScoped$1.invoke#internal"
+  call void @"kfun:kotlinx.cinterop.refTo$$inlined$usingPinned$1...invoke#internal"
+
+; f0e5980 — one arm, so no kclass comparison at all
+  call void @"kfun:io.ktor.network.util.getAddressInfo$$inlined$memScoped$1.invoke#internal"
+```
+
+**Kotlin/Native's closed-world devirtualisation expands `invoke` on the deferred lambdas into a
+chain of `kclass` comparisons, and the number of arms tracks the set of defer-lambdas reachable
+in the whole program.** Add or remove one anywhere — in this case through ordinary feature
+commits, with **no dependency change at all** — and a shared stdlib function's control flow, and
+therefore its PGO hash, moves.
+
+**This is a platform property with no C or C++ equivalent, and it is the mechanism behind
+"CFG change in hot shared code".** A function's profile hash on Kotlin/Native is not a function
+of its own source; it is a function of the whole program's composition. Anyone planning profile
+reuse across builds should expect staleness to be triggered by changes that touch nothing they
+wrote — which is also why the loss concentrates in a handful of hot shared functions rather than
+spreading thinly.
+
+The control holds: a build-only commit retains 100.000 % by weight, so none of this is harness
+noise. `opt`'s warnings track the reader independently at 0, 0, 8, 15, 170.
+
+**Direction.** The brief asks for the *next* three commits; the trained revision is the branch
+tip, so earlier ones are used. Name and hash agreement is symmetric between two revisions, but a
+forward test would additionally see names that only new code introduces, and this does not.
 
 **It is not RQ5.** Retained *coverage* is not retained *effect*: a profile can still apply to
 99.58 % of functions and be worth less, because the counts inside it describe a workload and a
