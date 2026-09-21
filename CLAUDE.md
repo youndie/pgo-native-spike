@@ -116,14 +116,15 @@ request titles and bodies. Commits follow Conventional Commits.
 make check
 ```
 
-Documentation only, for now — there is no build until the fork lands in
-[B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md). Whatever is not in
-`make check` is not a gate.
+Documentation and the readers' controls — there is no compiled artefact in this repository, and
+[B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md)'s fork was dropped once the
+stock toolchain turned out to be enough. Whatever is not in `make check` is not a gate.
 
-**There is deliberately no CI workflow yet, and that is not an oversight.** This repository is
-private, the account's GitHub Actions minutes are exhausted — a job on `ubuntu-latest` in a
-private repository does not start at all — and no self-hosted runner is registered for it. A
-workflow added today would sit in `queued` for ever, and a run that never finishes looks exactly
-like a run that passed, which is worse than having none. `make check` runs locally before every
-push. If the repository goes public at publication time, standard runners become free and the
-workflow is added then.
+**CI is `.github/workflows/check.yml`, and it runs exactly `make check`.** It did not exist while this repository was
+private: the account's Actions minutes are exhausted and a job on `ubuntu-latest` in a private repository
+does not start at all, so a workflow would have sat in `queued` for ever — and a run that never
+finishes looks exactly like a run that passed, which is worse than having none. **The repository
+went public on 2026-09-21**, standard runners became free, and the workflow was added then, as
+this paragraph always said it would be.
+
+`make check` still runs locally before every push; CI is the second opinion, not the first.
