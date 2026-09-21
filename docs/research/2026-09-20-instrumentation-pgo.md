@@ -339,9 +339,12 @@ per request on both builds:
 | runtime | 908 | 174 | −80.8 % |
 | libc & native | 2 534 | 1 846 | −27.1 % |
 
-**The two buckets that cannot change do not change.** Same source, same compiler, same syscalls:
-Kotlin self and kernel move by under a point, which is what a correct attribution must produce
-and a broken one would not. And the two buckets the allocator touches account for **1 393 µs of
+**The two buckets that cannot change are consistent with not changing.** Same source, same
+compiler, same syscalls: Kotlin self and kernel come out at +0.8 % and +0.6 %. Those figures are
+a share multiplied by a CPU-per-request that itself carries ±2.33 %, so **the honest reading is
+"consistent with zero", not "moved by under a point"** — the ruler does not support the second.
+What the check establishes is that a correct attribution must put these two at zero and a broken
+one need not, and both land there. And the two buckets the allocator touches account for **1 393 µs of
 the measured 1 419 µs gap** — a 26 µs residual, 1.8 %, which is the small buckets the table omits.
 
 A share table cannot show this and an absolute one does, which is an argument for reporting µs
@@ -566,21 +569,41 @@ RQ0 and no new instrument at all (**B-24**, `logs/b-24/`).
 A profile trained on `6359a88`, applied to the IR of the revisions before it. 5 763 functions
 carry non-zero counts:
 
-| revision | what changed | applied | retained | hash mismatch |
+| revision | what changed | retained, **functions** | retained, **counter weight** | hash mismatch |
 |---|---|---:|---:|---:|
-| `6359a88` | nothing — self | 5 762 | **99.98 %** | 0 |
-| `c4ba99f` | build only, no source | 5 761 | **99.97 %** | 0 |
-| `5c701e4` | one feature commit | 5 757 | **99.90 %** | 3 |
-| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 5 739 | **99.58 %** | 8 |
+| `6359a88` | nothing — self | 99.983 % | **100.000 %** | 0 |
+| `c4ba99f` | build only, no source | 99.965 % | **100.000 %** | 0 |
+| `5c701e4` | one feature commit | 99.896 % | **99.999 %** | 3 |
+| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 99.584 % | **99.968 %** | 8 |
 
-**Generated names do not drift.** A minor version bump of the web framework — a larger change
-than a typical commit — costs **0.42 %** of the profile's non-zero functions. The control holds
-too: a build-only commit that changes no source retains 99.97 %, one function away from applying
-the profile to itself, so the figure is not harness noise. `opt`'s own warnings track the reader
-independently at 0, 0, 8, 15.
+**Counting functions understates retention here, and the weighted column is the one that
+matters.** A lost cold lambda and a lost hot function are not the same loss. Weighted by the
+counters the profile actually carries, the Ktor bump costs **0.032 %** — 468 374 of
+1 457 158 189 — an order of magnitude *less* than the function count suggests, because what
+stops matching is cold.
 
-**Profile staleness is not what limits how long a profile lives on this platform** — which is
-the transferable half of a question whose scored half is blocked.
+**Generated names do change, and an earlier version of this document was wrong to say they do
+not.** Of the 16 functions that disappear by name at the Ktor bump, **11 carry a generated-name
+marker** — all of them `ingestModule$2…` lambdas, in the one module whose code actually changed.
+That is name instability *under a code change*, which is expected; it is not gratuitous drift.
+**Their combined weight is 19 counters out of 1.46 billion.**
+
+**What actually costs the profile at a framework bump is CFG change in hot shared code, not
+names.** The eight hash mismatches carry 467 209 of the 468 374 lost counters, and one function
+— `kotlinx.cinterop.DeferScope#executeAllDeferred` — is 442 333 of them by itself.
+
+The control holds: a build-only commit that changes no source retains 100.000 % by weight, so the
+figure is not harness noise. `opt`'s own warnings track the reader independently at 0, 0, 8, 15.
+
+**Profile staleness is not what limits how long a profile lives on this platform** — 99.968 % of
+the information survives a framework minor bump — which is the transferable half of a question
+whose scored half is blocked.
+
+**Direction, stated because the brief said otherwise.** The brief asks for the *next* three
+commits; the trained revision is the tip of the branch, so the three **preceding** ones are used.
+For name and CFG-hash agreement the relation is symmetric — two revisions either match or they
+do not — but a forward test would additionally catch names that only *new* code introduces, and
+this does not.
 
 **It is not RQ5.** Retained *coverage* is not retained *effect*: a profile can still apply to
 99.58 % of functions and be worth less, because the counts inside it describe a workload and a

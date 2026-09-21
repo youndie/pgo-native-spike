@@ -1,0 +1,4 @@
+=== two copies of the SAME binary (xyk-dyn-6359a88) on bench-a ===
+ready
+  arm a pid=1372406   arm b pid=1372407   CLK_TCK=100   subject nproc=4
+=== 9 rounds at 180 rps, the same binary as both arms, interleaved, round 1 discarded ===

@@ -30,7 +30,13 @@ ENTRY_COUNT = re.compile(r'^(![0-9]+) = !\{!"function_entry_count", i64 \d+\}', 
 
 
 def read_profile(path):
-    """name -> (hash, has_a_non_zero_counter)."""
+    """name -> (hash, has_a_non_zero_counter, summed_counters).
+
+    The third field is what makes a loss *weighable*. Retention counted in functions treats a
+    cold lambda and the hottest function in the program alike; counted in counters it does not,
+    and which of the two a reader wants depends on whether they care how many functions kept
+    their profile or how much of the profile's information survived.
+    """
     out, name = {}, None
     for line in open(path, encoding="utf-8", errors="replace"):
         m = re.match(r"^  (\S.*):$", line)
@@ -43,7 +49,9 @@ def read_profile(path):
             continue
         m = re.match(r"^    Block counts: \[(.*)\]", line)
         if m and name in out:
-            out[name][1] = any(int(x) > 0 for x in m.group(1).split(",") if x.strip())
+            counts = [int(x) for x in m.group(1).split(",") if x.strip()]
+            out[name][1] = any(c > 0 for c in counts)
+            out[name].append(sum(counts))
     return out
 
 
@@ -92,7 +100,9 @@ def report(profile_path, module_path):
     if not profile:
         sys.exit(f"parsed no functions out of {profile_path}")
 
-    non_zero = {n for n, (_, nz) in profile.items() if nz}
+    non_zero = {n for n, v in profile.items() if v[1]}
+    weight = {n: (profile[n][2] if len(profile[n]) > 2 else 0) for n in non_zero}
+    total_weight = sum(weight.values())
     applied = {n for n in non_zero if n in annotated or bare(n) in annotated}
     dropped = sorted(non_zero - applied)
     # A name in the profile that is not a define anywhere is not a hash mismatch: the function was
@@ -105,6 +115,11 @@ def report(profile_path, module_path):
     print(f"... with a non-zero counter:           {len(non_zero)}")
     print(f"... of those, profile applied:         {len(applied)}")
     print(f"... of those, dropped:                 {len(dropped)}")
+    if total_weight:
+        lost_w = sum(weight[n] for n in dropped)
+        print(f"retained, counted in functions:        {100 * len(applied) / len(non_zero):.3f} %")
+        print(f"retained, counted in COUNTER WEIGHT:   {100 * (1 - lost_w / total_weight):.3f} %"
+              f"   ({lost_w:,} of {total_weight:,})")
     print(f"      still a define -> hash mismatch: {len(mismatch)}")
     print(f"      no longer a define -> inlined or not emitted: {len(absent)}")
     for n in mismatch[:10]:
@@ -181,6 +196,9 @@ define void @"kfun:#generic(){0\C2\A7<kotlin.Any?>}"() !prof !1 {
     check("escaped generic name matched", u"kfun:#generic(){0§<kotlin.Any?>}" in every, True)
     # never_inlined has a non-zero count and is not a define: absent, not a hash mismatch.
     check("function absent from module is not a mismatch", mismatch, 0)
+    # A loss of one cold function must not read as a large loss of information.
+    prof2 = read_profile(pp)
+    check("counters are summed per function", prof2["plain_c_function"][2], 7)
     return ok
 
 
