@@ -31,43 +31,57 @@ profile does a typical commit cost?
   that is large even where nothing changed is measuring the harness.
 - Anchors: `logs/b-24/`, `pgo-native-spike/scripts/profile_applied.py`.
 
-## Iteration 1 — 2026-09-21. A profile survives a code change almost intact
+## Iteration 1 — 2026-09-21, corrected twice
 
-Trained on `6359a88`, applied to each revision's IR. 5 763 functions carry non-zero counts and
-1 457 158 189 counters between them:
+Trained on `6359a88`, applied to earlier revisions' IR. **Each row is the distance from the
+trained revision, not from its neighbour.** 5 763 non-zero functions, 1 457 158 189 counters:
 
-| revision | what changed | retained, **functions** | retained, **weight** | hash mismatch |
-|---|---|---:|---:|---:|
-| `6359a88` | nothing — self | 99.983 % | **100.000 %** | 0 |
-| `c4ba99f` | build only, no source | 99.965 % | **100.000 %** | 0 |
-| `5c701e4` | one feature commit | 99.896 % | **99.999 %** | 3 |
-| `f0e5980` | **Ktor 3.5.2 → 3.6.0** | 99.584 % | **99.968 %** | 8 |
+| revision | Ktor | distance | retained, functions | retained, **weight** | hash mismatch |
+|---|---|---|---:|---:|---:|
+| `6359a88` | 3.6.0 | self | 99.983 % | **100.000 %** | 0 |
+| `c4ba99f` | 3.6.0 | 1, build only | 99.965 % | **100.000 %** | 0 |
+| `5c701e4` | 3.6.0 | 2 | 99.896 % | **99.999 %** | 3 |
+| `f0e5980` | 3.6.0 | 3 | 99.584 % | **99.968 %** | 8 |
+| **`c62412d`** | **3.5.2** | **4, across the version boundary** | **96.460 %** | **99.683 %** | **78** |
 
-- **AC met** — four revisions, applied and mismatch counts for each.
-- **AC (control) met** — `c4ba99f` changes no source and retains **100.000 % by weight**.
-- **`opt`'s own warnings track the reader**: 0, 0, 8, 15 against 0, 0, 3, 8 — not equal, since
-  `opt` warns about zero-count functions too, but the same direction and order.
+- **AC met** — five revisions, applied and mismatch counts for each.
+- **AC (control) met** — a build-only commit retains **100.000 % by weight**.
+- **`opt`'s warnings track the reader independently**: 0, 0, 8, 15, 170.
 
-**Weighting was added after review and it changes the reading.** Counting functions treats a cold
-lambda and a hot function alike. By counter weight the Ktor bump costs **0.032 %** rather than
-0.42 % — the loss is an order of magnitude smaller than the function count implies, because what
-stops matching is cold. `scripts/profile_applied.py` now reports both, with a control case.
+### Correction 1 — the framework bump was in no comparison
 
-**Generated names do change, and iteration 1 of this item said they do not.** Of the 16 functions
-absent by name at the Ktor bump, **11 carry a generated-name marker** — every one an
-`ingestModule$2…` lambda, in the single module whose code actually changed. That is name
-instability under a code change, not gratuitous drift, and **their total weight is 19 counters of
-1.46 billion**.
+This item first labelled `f0e5980` as "Ktor 3.5.2 → 3.6.0" and built a headline on it.
+**`f0e5980` is the commit that introduced 3.6.0**, so it and every later revision carry the same
+version and the bump was on neither side. `c62412d` was added to fix that, and crossing the
+boundary costs an order of magnitude more: **0.317 % of weight against 0.032 %**, 78 hash
+mismatches against 8.
 
-**The expensive losses are CFG changes in hot shared code.** The eight hash mismatches carry
-467 209 of the 468 374 lost counters, and `kotlinx.cinterop.DeferScope#executeAllDeferred` is
-442 333 of them alone. That — not naming — is what a framework bump costs a profile.
+The conclusion survives with a bigger number: **99.683 % of a profile's information lands across
+a framework minor version and four commits.**
 
-**Direction.** The brief asks for the *next* three commits; the trained revision is the branch
-tip, so the three **preceding** ones are used. Name and hash agreement is symmetric between two
-revisions, but a forward test would additionally see names that only new code introduces, and
-this does not.
+### Correction 2 — weighting, and "names do not drift" withdrawn
 
-**What this does not say.** RQ5's green is about *retained effect*, not retained coverage. A
-profile can apply to 99.968 % of the weight and still be worth less, because the counts inside it
-describe a workload and a code shape that have moved. That half needs RQ3.
+Counting functions treats a cold lambda and a hot function alike; `scripts/profile_applied.py`
+now also sums counters, with a control case. And of the 16 functions absent by name at
+`f0e5980`, **11 carry a generated-name marker** — all `ingestModule$2…` lambdas in the module
+that changed — for a combined **19 counters of 1.46 billion**. Names do change; they are cold.
+
+### What moves a hot function's hash, confirmed in the IR
+
+`DeferScope#executeAllDeferred` alone is **442 333 of the 468 374** counters lost at `f0e5980`.
+Its source did not change and neither did the Kotlin version. In `6359a88` the IR carries a
+two-arm `kclass` comparison over the deferred lambdas; in `f0e5980`, one arm and no comparison.
+
+**Kotlin/Native's closed-world devirtualisation expands `invoke` into a chain of type guards
+whose arm count tracks the set of defer-lambdas reachable in the whole program** — so ordinary
+feature commits, with no dependency change, move a stdlib function's control flow and its PGO
+hash. **A profile hash here is a property of the whole program's composition, not of the
+function's source**, which has no C or C++ equivalent and is why the loss concentrates in a few
+hot shared functions instead of spreading thinly.
+
+**Direction.** The brief asks for the *next* commits; the trained revision is the branch tip, so
+earlier ones are used. Agreement is symmetric, but a forward test would additionally see names
+that only new code introduces.
+
+**What this does not say.** RQ5's green is retained *effect*, not retained coverage. That half
+needs RQ3.
