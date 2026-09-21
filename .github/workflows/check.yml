@@ -1,0 +1,27 @@
+# The gate, and it is the same one a person runs locally: `make check`.
+#
+# This workflow did not exist while the repository was private, because the account's Actions
+# minutes are exhausted and a job on `ubuntu-latest` in a private repository does not start at
+# all — a run stuck in `queued` for ever looks exactly like a run that passed, which is worse
+# than having none. Standard runners are free on a public repository, so it exists now.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # code_anchors.py resolves anchors into sibling repositories when they are checked out
+          # and reports the rest as "not checked out here" rather than as rot, so a shallow clone
+          # of this repository alone is enough.
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: make check
