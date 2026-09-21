@@ -291,8 +291,27 @@ separate PGO effects and are not covered by it.
 **And one detail from the IR excerpt caps inlining generally.** The promoted, inlined body still
 contains `call void @Kotlin_mm_safePointFunctionPrologue()`. Checked in the final binary:
 `itable` carries four such calls in its IR and the disassembly resolves them to
-`safePointAction`. **The safepoint poll survives inlining**, so every inlined callee still pays
-for one — a ceiling on what inlining can return anywhere in Kotlin/Native, not just here.
+`safePointAction`. **That was read as a platform ceiling — "every inlined callee still pays for
+a poll, anywhere in Kotlin/Native" — and it is wrong.** The IR it was read from came off the
+external-LTO route, and the claim was never checked against an ordinary build.
+
+**Checked now, on the same source through both routes:**
+
+| | defines | `call … safePoint` |
+|---|---:|---:|
+| ordinary build, kotlinc's own pipeline | 495 | **25** |
+| external `opt -passes=default<O3>` | 3 335 | **4 189** |
+
+Per function it is starker still: through the ordinary pipeline `sum` and `itable` **are not
+defines at all** — both are inlined into their caller. Through the external route both survive,
+and `sum`, the unit control that performs no dispatch, carries **11 safepoint references in 49
+lines**.
+
+**So the safepoint poll is a property of the route, not of the platform**, and it is the likely
+mechanism behind that route's cost: the unit control ran 0.472 ns/op through the ordinary build
+against 0.791 through the external one, and a real call with a poll in every iteration is what
+the difference looks like. Kotlin/Native's own pipeline removes nearly all of them; `opt` does
+not, because the passes that do it are not in `default<O3>`.
 
 ## The ceiling says the mechanism has nowhere to pay off here
 
