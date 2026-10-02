@@ -30,15 +30,17 @@ the point of divergence** and marked as one, keeping the reason the first idea w
 
 | Fact | Where verified |
 |---|---|
-| The portfolio's compiler comes from the `wip` catalog that a sborka release publishes; the subject pins `sborka = "0.4.0.86"` and declares no `kotlin` of its own | `xyk/gradle/libs.versions.toml`, lines 2–5 |
+| The portfolio's compiler comes from the `wip` catalog that a sborka release publishes; the subject pins `sborka = "0.4.0.86"` and declares no `kotlin` of its own | `youndie/xyk@c4ba99f!/gradle/libs.versions.toml`, lines 2–5 |
 | That catalog carries **`kotlin = "2.4.20"`**, `ktor = "3.5.2"`, `coroutines = "1.11.0"` | `io.github.youndie.sborka:catalog:0.4.0.86!/catalog-0.4.0.86.toml` lines 11, 15, 17 |
 | Kotlin/Native 2.4.20 declares **LLVM 21** for `linux_x64` (`llvmVersion.linux_x64=21`) | `kotlin-native-prebuilt-macos-aarch64-2.4.20!/konan/konan.properties:793` |
 | For `linux_x64` the compiler uses the **dev** bundle, not the user one: `llvmHome.linux_x64 = $llvm.linux_x64.dev`, and that resolves to the distribution **`llvm-21-x86_64-linux-dev-116`** | same file, lines 431 and 785 |
 | The host toolchain on this mac uses the **essentials** bundle instead (`llvmHome.macos_arm64 = $llvm.macos_arm64.user` → `llvm-21-aarch64-macos-essentials-97`) | same file, lines around 4 and 788 |
 
 **Consequence 1 — the fork tag is `v2.4.20`, and it was not the obvious guess.** sborka's own
-`gradle/libs.versions.toml` on `main` reads `kotlin = "2.4.10"`, because that is the version sborka
-itself builds with. The number the subject compiles with is the one in the *published* catalog, and
+`youndie/sborka@5ce352a!/gradle/libs.versions.toml` reads `kotlin = "2.4.10"`, because that is the version sborka
+itself builds with. (Correction, 2026-10-02: that was a local checkout behind `main`, which had
+moved to 2.4.20 on 2026-09-17 in `youndie/sborka@c972f13`, three days before this line; the
+conclusion does not depend on it.) The number the subject compiles with is the one in the *published* catalog, and
 they differ. A fork cut from the wrong tag would fail kill criterion 2 for a reason nobody would
 look for.
 
@@ -53,7 +55,7 @@ stops being an oracle. Addressed by [B-05](../backlog/B-05-six-unknowns-of-the-r
 
 | Fact | Where verified |
 |---|---|
-| The essentials bundle's `bin/` holds exactly nine entries: `clang`, `clang++`, `clang-21`, `clang-cache`, `ld.lld`, `lld`, `llvm-ar`, `llvm-cov`, **`llvm-profdata`** | `ls ~/.konan/dependencies/llvm-21-aarch64-macos-essentials-97/bin/`, reproduced 2026-09-20; independently recorded in `youndie/razves@72a6fde!/docs/research/research-architecture.md` §1.1 |
+| The essentials bundle's `bin` directory holds exactly nine entries: `clang`, `clang++`, `clang-21`, `clang-cache`, `ld.lld`, `lld`, `llvm-ar`, `llvm-cov`, **`llvm-profdata`** | `ls ~/.konan/dependencies/llvm-21-aarch64-macos-essentials-97/bin/`, reproduced 2026-09-20; independently recorded in `youndie/razves@72a6fde!/docs/research/research-architecture.md` §1.1 |
 | There is no `opt`, no `llvm-nm`, no `llvm-size`, no `llvm-objdump`, no `llvm-strip` in it | same listing |
 | No `libclang_rt.profile*` anywhere in that bundle | `find` over the bundle, 2026-09-20 |
 | `llvm-profdata` also exists in the 19 bundle and in the Android NDK toolchain under `~/.konan/dependencies` | same `find` |
@@ -79,7 +81,7 @@ Measured by the JIT phase on its own host (Ubuntu 24.04 in WSL2, 20 threads), 20
 
 | Fact | Where verified |
 |---|---|
-| `µs CPU/request` is computed from `utime+stime` in `/proc/<pid>/stat` around a clean window, divided by responses | `zavarnik/docs/research/research-engines.md` §1.1 |
+| `µs CPU/request` is computed from `utime+stime` in `/proc/<pid>/stat` around a clean window, divided by responses | `youndie/zavarnik@47adea9!/docs/research/research-engines.md` §1.1 |
 | The tick estimate **overstates by 6.4–7.2 % on that host, and overstates equally** at 25 context switches per second and at 298 000 — it is a kernel property, not a thread-count effect | same document §1.14, three variants against pinned-core occupancy from `/proc/stat` |
 | On a kernel with `CONFIG_SCHEDSTATS=y` the same comparison showed **no bias at all** (ticks/exec 0.998–1.001 over six runs) | same section, the owner's spare 2-core box |
 | The phase's written recommendation for future stands: take the cost per request from the occupancy of the **pinned cores**, which is bounded above by physics and converges with the truth at saturation | same section, "Следствие для чисел фазы" |
@@ -93,11 +95,11 @@ absolute µs per request, and "166 µs" on that host was really about 155. Amend
 
 | Fact | Where verified |
 |---|---|
-| The JIT phase's article protocol said "JVM on cores 0–7, generator on 8–15"; in fact the subject and the generator shared all twenty cores in **every** configuration, including the one called pinned | `zavarnik/docs/research/research-engines.md` §1.1 |
+| The JIT phase's article protocol said "JVM on cores 0–7, generator on 8–15"; in fact the subject and the generator shared all twenty cores in **every** configuration, including the one called pinned | `youndie/zavarnik@47adea9!/docs/research/research-engines.md` §1.1 |
 | The cause: `taskset -pc <pid>` pins one thread, not the process — 49 of 50 threads still read `Cpus_allowed_list: 0-19` | same row |
 | That phase decided not to re-measure, and its tables are true for what actually happened: one host, shared cores | same document, D3 |
-| A genuine two-host protocol exists and was run on **xyk** on 2026-09-16: subject host a 4-core 7 GB cloud VM, generator host 4 cpu with k6 v1.4.1 on a private network about half a millisecond away, `constant-arrival-rate`, arms interleaved, three rounds, **round 1 discarded as warm-up, declared before the run** | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
-| That protocol establishes **the generator's own ceiling** before reading an arm: the same pair offers 8 000 rps at p50 0.5 ms with zero dropped iterations and first strains at 16 000 | same document, and `measurements-2026-09-15/throughput-pilot.md` |
+| A genuine two-host protocol exists and was run on **xyk** on 2026-09-16: subject host a 4-core 7 GB cloud VM, generator host 4 cpu with k6 v1.4.1 on a private network about half a millisecond away, `constant-arrival-rate`, arms interleaved, three rounds, **round 1 discarded as warm-up, declared before the run** | `youndie/xyk@c4ba99f!/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
+| That protocol establishes **the generator's own ceiling** before reading an arm: the same pair offers 8 000 rps at p50 0.5 ms with zero dropped iterations and first strains at 16 000 | same document, and `youndie/xyk@c4ba99f!/docs/research/measurements-2026-09-15/throughput-pilot.md` |
 | It also closes the accounting: 60 000 offered, ≈13 100 delivered + 46 700 dropped = 59 800, so the generator is not losing anything quietly | same document |
 
 **Consequence.** The brief's Hosts row cites the wrong phase, and the protocol it means is stricter
@@ -108,10 +110,10 @@ check the JIT phase never had — the check that stops an arm being read off a s
 
 | Fact | Where verified |
 |---|---|
-| On the JIT phase's host, within-variant spread over three interleaved runs was **±13 % for rps and 2–9 % for µs CPU/request** | `zavarnik/docs/research/research-engines.md` §1.5, D2 |
-| On xyk's two-host pair, round-to-round spread of rps on a 30 s round was **1.05–1.07×** | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
+| On the JIT phase's host, within-variant spread over three interleaved runs was **±13 % for rps and 2–9 % for µs CPU/request** | `youndie/zavarnik@47adea9!/docs/research/research-engines.md` §1.5, D2 |
+| On xyk's two-host pair, round-to-round spread of rps on a 30 s round was **1.05–1.07×** | `youndie/xyk@c4ba99f!/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
 | On a host showing the runtime four cores, with the generator pinned away, the Kotlin arm's own spread over four interleaved rounds was **2.3×**, against the Go twin's 1.02× on the same host and route | `youndie/xyk@c4ba99f!/docs/research/research-architecture.md` §1.18 |
-| The subject host cannot have its clock fixed on the other portfolio Linux box either: no `intel_pstate` and no `cpufreq` under `/sys` in WSL2, turbo governed by the Windows host | `zavarnik/docs/research/research-optimizer.md` §1.4 |
+| The subject host cannot have its clock fixed on the other portfolio Linux box either: no `intel_pstate` and no `cpufreq` under `/sys` in WSL2, turbo governed by the Windows host | `youndie/zavarnik@47adea9!/docs/research/research-optimizer.md` §1.4 |
 
 **Consequence 1 — kill criterion 4 is the likeliest way this study ends, and it is also the
 cheapest to reach.** The brief stops the macro half if the ruler is above 5 %. Every prior
@@ -139,9 +141,9 @@ cited across the portfolio, and it is the wrong one to carry into RQ1.
 
 | Fact | Where verified |
 |---|---|
-| Those shares are **user application code only**; the remainder at 50 rps was kotlinx 21.7 %, the Postgres driver 18.2 %, Ktor 13.0 %, stdlib 8.8 %, Exposed 4.7 % | `zavarnik/docs/research/research-optimizer.md` §1.8 |
+| Those shares are **user application code only**; the remainder at 50 rps was kotlinx 21.7 %, the Postgres driver 18.2 %, Ktor 13.0 %, stdlib 8.8 %, Exposed 4.7 % | `youndie/zavarnik@47adea9!/docs/research/research-optimizer.md` §1.8 |
 | RQ1's Kotlin bucket is **application, libraries and stdlib alike** — the brief's own wording | [BRIEF.md](../../BRIEF.md), the attribution table |
-| At 50 rps under a one-core limit that service was nearly idle: 2 817 CPU samples in 120 s, and 61 % of self samples were in "jvm" — JIT compiler threads among them | `zavarnik/docs/research/research-optimizer.md` §1.8 |
+| At 50 rps under a one-core limit that service was nearly idle: 2 817 CPU samples in 120 s, and 61 % of self samples were in "jvm" — JIT compiler threads among them | `youndie/zavarnik@47adea9!/docs/research/research-optimizer.md` §1.8 |
 
 **Consequence 1 — the two bucket boundaries are not the same boundary, and the arithmetic does not
 transfer.** Under RQ1's rule most of what the JIT phase called "libraries" would be Kotlin code; the
@@ -158,7 +160,7 @@ not on any measurement of this platform. They stand as declared.
 
 | Fact | Where verified |
 |---|---|
-| `GET /health/live` — a route that parses nothing, verifies nothing and touches no database — delivered **434 rps** against the ingest route's **437**, on the same binary, host and generator | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
+| `GET /health/live` — a route that parses nothing, verifies nothing and touches no database — delivered **434 rps** against the ingest route's **437**, on the same binary, host and generator | `youndie/xyk@c4ba99f!/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
 | The Go twin's ingest, doing the same signature check and the same SQLite insert, delivered **601** | same table |
 
 **Consequence — and it is the reason this subject is a fair one for the question.** The brief
@@ -238,7 +240,7 @@ perf output a namespace rule would mostly work, and "mostly" is what A1.4 exists
 sees no kernel-mode samples. Either `perf` runs on the subject host or that row is reported as not
 measured ([A1.5](../../BRIEF.md)), and on the portfolio's other Linux host `perf` is a stub not
 built for the running kernel and `schedstat` is off entirely
-(`zavarnik/docs/research/research-engines.md` §1.14). Checking the cloud host is hours of work and
+(`youndie/zavarnik@47adea9!/docs/research/research-engines.md` §1.14). Checking the cloud host is hours of work and
 is [B-02](../backlog/B-02-can-the-subject-host-be-profiled.md).
 
 **Consequence 4 — razves output is data, not a verdict.** It is this portfolio's own tool measuring
@@ -249,10 +251,10 @@ are printed beside every table it produces, rather than folded away.
 
 | Fact | Where verified |
 |---|---|
-| xyk's release build has **four** measurement axes as Gradle properties, not two: `xyk.httpClient` (default `false`), `xyk.staticLink` (default `false`), `xyk.allocator` (default `paged-off`), `xyk.outbound` (default `real`) | `xyk/server/build.gradle.kts`, lines 28–44 |
+| xyk's release build has **four** measurement axes as Gradle properties, not two: `xyk.httpClient` (default `false`), `xyk.staticLink` (default `false`), `xyk.allocator` (default `paged-off`), `xyk.outbound` (default `real`) | `youndie/xyk@c4ba99f!/server/build.gradle.kts`, lines 28–44 |
 | `paged-off` is `-Xbinary=pagedAllocator=false`; the other arms are `std` (the deprecated spelling of the same allocator), `fixed16` and `default` | same file, lines 139–162 |
-| `xyk.httpClient=false` removes the outbound engine, and with it the delivery workers — the build xyk calls **ingest-only** | same file, and `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
-| The arm xyk's own two-host measurement was taken on was the ingest-only build, **statically linked** — which is not the build's default for either axis | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
+| `xyk.httpClient=false` removes the outbound engine, and with it the delivery workers — the build xyk calls **ingest-only** | same file, and `youndie/xyk@c4ba99f!/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
+| The arm xyk's own two-host measurement was taken on was the ingest-only build, **statically linked** — which is not the build's default for either axis | `youndie/xyk@c4ba99f!/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
 | The choice was made on measurements recorded in that file — survival under a memory limit and rps, per allocator — and `-Xallocator=std` is deprecated with the compiler naming its replacement | same file, the comment block at lines 110–160 |
 | RSS on Kotlin/Native follows thread count rather than live heap: the allocator holds a page per size class **per thread**, 256 kB by default | the mechanism is [KT-89365](https://youtrack.jetbrains.com/issue/KT-89365); measured on katcher and recorded in `youndie/xyk@c4ba99f!/docs/research/research-architecture.md` §1.8 (the allocator row); the 256 KiB default is named in `youndie/xyk@c4ba99f!/server/build.gradle.kts` |
 
@@ -421,10 +423,10 @@ something no tree here holds, and the checker reports those in their own section
 
 | Kind | Code |
 |---|---|
-| The macro subject | `xyk/server/build.gradle.kts` — the allocator and static-link options every arm carries |
-| The macro subject's stand | `xyk/bench/run.sh`, `xyk/bench/columns.sh` — the two-host protocol and its refusal to take a same-host number |
-| The prior phase | `zavarnik/docs/research/research-engines.md` — the macro unit, its bias, and the pinning defect |
-| The prior phase | `zavarnik/docs/research/research-optimizer.md` — the ceiling measurement this study must not quote |
+| The macro subject | `youndie/xyk@c4ba99f!/server/build.gradle.kts` — the allocator and static-link options every arm carries |
+| The macro subject's stand | `youndie/xyk@c4ba99f!/bench/run.sh`, `youndie/xyk@c4ba99f!/bench/columns.sh` — the two-host protocol and its refusal to take a same-host number |
+| The prior phase | `youndie/zavarnik@47adea9!/docs/research/research-engines.md` — the macro unit, its bias, and the pinning defect |
+| The prior phase | `youndie/zavarnik@47adea9!/docs/research/research-optimizer.md` — the ceiling measurement this study must not quote |
 | The attribution tool | `youndie/razves@72a6fde!/README.md` — bytes and samples per package and klib; the `:sampler` module |
 | Compiler pins | `io.github.youndie.sborka:catalog:0.4.0.86!/catalog-0.4.0.86.toml` — Kotlin 2.4.20, Ktor 3.5.2, coroutines 1.11.0 |
 | LLVM pins | `kotlin-native-prebuilt-macos-aarch64-2.4.20!/konan/konan.properties` — `llvmVersion.linux_x64=21`, `llvm-21-x86_64-linux-dev-116` |

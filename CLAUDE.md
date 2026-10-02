@@ -133,6 +133,12 @@ stays in `scripts/` is the study's own — the readers, their controls, and `bri
 is research-method's generic script copied in unchanged (its record is the line in BRIEF.md).
 `brief_freeze.py --history` needs the whole history: a shallow clone is refused, not passed.
 
+**The code-anchors report blocks** (`ANCHORS_ARGS ?= --check` in the Makefile): a path in `docs/`
+that resolves to nothing fails `make check`. A file in another repository is cited as
+`youndie/<repo>@<commit>!/<path>`, at the commit its head was at when the line was written - xyk,
+zavarnik and sborka are not cloned here, and a bare `xyk/...` is looked up in this repository only -
+and a file inside a toolchain or a jar as `<artefact>!/<path>` (docs-bootstrap SPEC §4.1).
+
 **CI is `.github/workflows/check.yaml`, and it runs exactly `make check`.** It did not exist while this repository was
 private: the account's Actions minutes are exhausted and a job on `ubuntu-latest` in a private repository
 does not start at all, so a workflow would have sat in `queued` for ever — and a run that never
