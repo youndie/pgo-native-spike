@@ -44,7 +44,7 @@ RQ1 is a *share*, and the libc bucket it pushes into the denominator is 26–46 
 the sentence "the mechanism has nowhere to pay off here" is conditional on a build property, not
 a statement about Kotlin/Native.
 
-**Why the build sets it, measured by the subject's own repository** (`xyk/server/build.gradle.kts`,
+**Why the build sets it, measured by the subject's own repository** (`youndie/xyk@c4ba99f!/server/build.gradle.kts`,
 64 MiB limit, ten interleaved rounds):
 
 | allocator | survived the limit | ingest throughput |

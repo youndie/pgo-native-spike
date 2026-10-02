@@ -27,4 +27,4 @@ jobs:
           # every commit since the freeze, and refuses a shallow clone rather than passing it.
           fetch-depth: 0
 
-      - uses: youndie/docs-bootstrap@v0.3.5
+      - uses: youndie/docs-bootstrap@v0.3.8
