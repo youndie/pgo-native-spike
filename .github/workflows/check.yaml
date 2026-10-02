@@ -1,0 +1,30 @@
+# The gate, and it is the same one a person runs locally: `make check`.
+#
+# THE VERSION OF THE DOCUMENTATION CHECKS IS WRITTEN HERE AND NOWHERE ELSE: the ref in the `uses:`
+# line below (docs-bootstrap's templates/workflow-check.yaml). CI runs the checks at that ref because
+# the runner resolves it; the Makefile reads the same line and fetches the same ref for a local
+# `make check`. The action sets up Python with PyYAML, numbers the backlog against the base branch
+# on a pull request, runs `make check`, and refuses `status: draft` on main.
+#
+# This workflow did not exist while the repository was private, because the account's Actions
+# minutes were exhausted and a job on `ubuntu-latest` in a private repository does not start at
+# all — a run stuck in `queued` for ever looks exactly like a run that passed, which is worse than
+# having none. Standard runners are free on a public repository, so it exists now.
+name: check
+
+# No path filters: a filter is how a rule stops applying to the change that breaks it.
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The whole history: `brief_freeze.py --history` checks the record and the frozen bytes in
+          # every commit since the freeze, and refuses a shallow clone rather than passing it.
+          fetch-depth: 0
+
+      - uses: youndie/docs-bootstrap@v0.3.0

@@ -35,6 +35,23 @@ first verified on 2026-09-20 against the received file by
 [B-14](docs/backlog/B-14-make-the-freeze-checkable-from-the-repo.md) at the moment the embedded
 duplicate was removed.
 
+**The record the check reads** (added 2026-10-02, after the study closed). `scripts/brief_freeze.py`
+is now research-method's generic script, which replaced this repository's own copy: the digest
+and the size it checks are the line below rather than constants in the script, and `since` names
+the commit from which these bytes have stood. Written by `brief_freeze.py --record
+docs/research/source-brief.md --since 7253038`, never by hand:
+
+<!-- frozen: path=docs/research/source-brief.md bytes=18849 sha256=77d8480c45cba5eae46d7f46f7006a23fe336492bb43a54f7902c87608859a77 scope=after-marker since=72530382e5edd557b2989891691c14938dfcc799 -->
+
+`make check` runs the plain check, `--history` (the record and the frozen bytes in every commit
+from `7253038` on) and `--control`. **`--history --window logs` fails, and that is a finding about
+the past, not a defect to fix**: the frozen file entered the repository at `7253038` (B-14), after
+fourteen commits had already added measurements under `logs/`, the first of them `480124b` (B-02).
+Until then the repository held only the demoted copy embedded in this file, which could not be
+hashed as it stood, and the freeze was the digest above plus a received file outside the
+repository. That the text did not move in those hours rests on B-01's and B-14's verifications, not
+on anything the repository can show — which is why the window line is not in `make check`.
+
 ## Amendments
 
 Made on 2026-09-20, **before the first measurement**, each with the measurement elsewhere in the
