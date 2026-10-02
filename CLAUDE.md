@@ -124,7 +124,14 @@ Documentation and the readers' controls — there is no compiled artefact in thi
 [B-04](docs/backlog/B-04-fork-at-the-pinned-tag-and-the-baseline.md)'s fork was dropped once the
 stock toolchain turned out to be enough. Whatever is not in `make check` is not a gate.
 
-**CI is `.github/workflows/check.yml`, and it runs exactly `make check`.** It did not exist while this repository was
+**The documentation checks are not copied in.** They are docs-bootstrap's, at the version the
+`uses: youndie/docs-bootstrap@<ref>` line in `.github/workflows/check.yaml` pins: CI runs them
+there, and `make check` reads the same line and fetches that ref into `.docs-bootstrap/`. What
+stays in `scripts/` is the study's own — the readers, their controls, and `brief_freeze.py`, which
+is research-method's generic script copied in unchanged (its record is the line in BRIEF.md).
+`brief_freeze.py --history` needs the whole history: a shallow clone is refused, not passed.
+
+**CI is `.github/workflows/check.yaml`, and it runs exactly `make check`.** It did not exist while this repository was
 private: the account's Actions minutes are exhausted and a job on `ubuntu-latest` in a private repository
 does not start at all, so a workflow would have sat in `queued` for ever — and a run that never
 finishes looks exactly like a run that passed, which is worse than having none. **The repository
