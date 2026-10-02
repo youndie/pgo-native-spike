@@ -126,7 +126,9 @@ stock toolchain turned out to be enough. Whatever is not in `make check` is not 
 
 **The documentation checks are not copied in.** They are docs-bootstrap's, at the version the
 `uses: youndie/docs-bootstrap@<ref>` line in `.github/workflows/check.yaml` pins: CI runs them
-there, and `make check` reads the same line and fetches that ref into `.docs-bootstrap/`. What
+there, and `make check` reads the same line and fetches that ref into `.docs-bootstrap/`. Only the
+goals that run them (`check`, `gate`, `report`, `fix`, `docs-*`) read the pin; `make controls`
+runs the study's own controls without fetching anything. What
 stays in `scripts/` is the study's own — the readers, their controls, and `brief_freeze.py`, which
 is research-method's generic script copied in unchanged (its record is the line in BRIEF.md).
 `brief_freeze.py --history` needs the whole history: a shallow clone is refused, not passed.

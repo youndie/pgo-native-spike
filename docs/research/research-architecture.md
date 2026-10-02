@@ -53,7 +53,7 @@ stops being an oracle. Addressed by [B-05](../backlog/B-05-six-unknowns-of-the-r
 
 | Fact | Where verified |
 |---|---|
-| The essentials bundle's `bin/` holds exactly nine entries: `clang`, `clang++`, `clang-21`, `clang-cache`, `ld.lld`, `lld`, `llvm-ar`, `llvm-cov`, **`llvm-profdata`** | `ls ~/.konan/dependencies/llvm-21-aarch64-macos-essentials-97/bin/`, reproduced 2026-09-20; independently recorded in `razves/docs/research/research-architecture.md` §1.1 |
+| The essentials bundle's `bin/` holds exactly nine entries: `clang`, `clang++`, `clang-21`, `clang-cache`, `ld.lld`, `lld`, `llvm-ar`, `llvm-cov`, **`llvm-profdata`** | `ls ~/.konan/dependencies/llvm-21-aarch64-macos-essentials-97/bin/`, reproduced 2026-09-20; independently recorded in `youndie/razves@72a6fde!/docs/research/research-architecture.md` §1.1 |
 | There is no `opt`, no `llvm-nm`, no `llvm-size`, no `llvm-objdump`, no `llvm-strip` in it | same listing |
 | No `libclang_rt.profile*` anywhere in that bundle | `find` over the bundle, 2026-09-20 |
 | `llvm-profdata` also exists in the 19 bundle and in the Android NDK toolchain under `~/.konan/dependencies` | same `find` |
@@ -110,7 +110,7 @@ check the JIT phase never had — the check that stops an arm being read off a s
 |---|---|
 | On the JIT phase's host, within-variant spread over three interleaved runs was **±13 % for rps and 2–9 % for µs CPU/request** | `zavarnik/docs/research/research-engines.md` §1.5, D2 |
 | On xyk's two-host pair, round-to-round spread of rps on a 30 s round was **1.05–1.07×** | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
-| On a host showing the runtime four cores, with the generator pinned away, the Kotlin arm's own spread over four interleaved rounds was **2.3×**, against the Go twin's 1.02× on the same host and route | `xyk/docs/research/research-architecture.md` §1.18 |
+| On a host showing the runtime four cores, with the generator pinned away, the Kotlin arm's own spread over four interleaved rounds was **2.3×**, against the Go twin's 1.02× on the same host and route | `youndie/xyk@c4ba99f!/docs/research/research-architecture.md` §1.18 |
 | The subject host cannot have its clock fixed on the other portfolio Linux box either: no `intel_pstate` and no `cpufreq` under `/sys` in WSL2, turbo governed by the Windows host | `zavarnik/docs/research/research-optimizer.md` §1.4 |
 
 **Consequence 1 — kill criterion 4 is the likeliest way this study ends, and it is also the
@@ -172,7 +172,7 @@ is the territory PGO can in principle touch.
 
 | Fact | Where verified |
 |---|---|
-| Same host, same binary, same route, four interleaved rounds: `--cpus=4` (a quota, 20 cores visible) gave a steady **3 871–3 954 rps**; `--cpuset-cpus=0-3` (4 cores visible) gave **355–816 rps** with the generator pinned away, spread 2.3× | `xyk/docs/research/research-architecture.md` §1.18 |
+| Same host, same binary, same route, four interleaved rounds: `--cpus=4` (a quota, 20 cores visible) gave a steady **3 871–3 954 rps**; `--cpuset-cpus=0-3` (4 cores visible) gave **355–816 rps** with the generator pinned away, spread 2.3× | `youndie/xyk@c4ba99f!/docs/research/research-architecture.md` §1.18 |
 | Two visible cores were *better* than four: 1 353–1 670 rps, steady | same table |
 | The Go twin on the same host and route: **55 953–56 972 rps**, spread 1.02× — flat across core counts | same table |
 | The mechanism is **not established**, and the obvious suspect (a `SelectorManager` occupying a `Dispatchers.Default` worker) is contradicted by two cores being better than four | same section |
@@ -200,12 +200,12 @@ Measured by razves over two real Kotlin/Native binaries, one ELF and one Mach-O.
 
 | Fact | Where verified |
 |---|---|
-| Kotlin/Native emits **twelve** `k…:` symbol prefixes; `kfun:`, `kclass:` and `kvar:` together are **12 125 of 23 336** Kotlin-prefixed symbols in the ELF binary | `razves/docs/research/research-architecture.md` §1.5 |
+| Kotlin/Native emits **twelve** `k…:` symbol prefixes; `kfun:`, `kclass:` and `kvar:` together are **12 125 of 23 336** Kotlin-prefixed symbols in the ELF binary | `youndie/razves@72a6fde!/docs/research/research-architecture.md` §1.3 |
 | The other nine — `kassociatedobjects:`, `kexttype:`, `kextoff:`, `kextname:`, `ktypew:` and the rest — are mostly vtables, interface tables and type info, and four of them appear only on Apple targets | same section |
 | Mach-O symbols carry a leading underscore, so the prefix match must be `^_?k…` | same section |
 | The Kotlin/Native C++ runtime is **Itanium-mangled (`_ZN…`) — and so is Rust**, because Rust's legacy mangling scheme produces `_ZN…` too | same document, §1.5 "Consequence 2" |
 | Grouping `_ZN` as "the konan runtime" attributed about **964 kB** of `tokio`, `sqlx_postgres` and `core::ptr` to the Kotlin runtime in razves's own subject | same place |
-| razves attributes bytes **and samples** to package and klib out of one symbol table, reading ELF and Mach-O itself with no subprocess, and charges every sample to exactly one row including the two rows for what it cannot name | `razves/README.md` |
+| razves attributes bytes **and samples** to package and klib out of one symbol table, reading ELF and Mach-O itself with no subprocess, and charges every sample to exactly one row including the two rows for what it cannot name | `youndie/razves@72a6fde!/README.md` |
 | razves publishes an in-process sampler (`io.github.youndie.razves:sampler`) that a binary links and that samples itself | same file |
 
 **Consequence 1 — the brief's Kotlin bucket names one prefix out of twelve.** Amendment
@@ -254,7 +254,7 @@ are printed beside every table it produces, rather than folded away.
 | `xyk.httpClient=false` removes the outbound engine, and with it the delivery workers — the build xyk calls **ingest-only** | same file, and `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
 | The arm xyk's own two-host measurement was taken on was the ingest-only build, **statically linked** — which is not the build's default for either axis | `xyk/docs/research/measurements-2026-09-16/throughput-three-columns.md` |
 | The choice was made on measurements recorded in that file — survival under a memory limit and rps, per allocator — and `-Xallocator=std` is deprecated with the compiler naming its replacement | same file, the comment block at lines 110–160 |
-| RSS on Kotlin/Native follows thread count rather than live heap: the allocator holds a page per size class **per thread**, 256 kB by default | `zavarnik`-era measurement recorded in `kafka-native-spike/docs/research/research-architecture.md` §1.4 |
+| RSS on Kotlin/Native follows thread count rather than live heap: the allocator holds a page per size class **per thread**, 256 kB by default | the mechanism is [KT-89365](https://youtrack.jetbrains.com/issue/KT-89365); measured on katcher and recorded in `youndie/xyk@c4ba99f!/docs/research/research-architecture.md` §1.8 (the allocator row); the 256 KiB default is named in `youndie/xyk@c4ba99f!/server/build.gradle.kts` |
 
 **Consequence 1.** The allocator moves the runtime's share of CPU, which is exactly RQ1's
 denominator, and it moves binary size, which is RQ6's number. Every arm — A0 through A4 — carries
@@ -286,7 +286,7 @@ the first measurement, and the write-up states the verdict as being about the in
 
 The study is a fork of a compiler, a patch set, a shell recipe and a document; none of that belongs
 in the subject's repository, and the subject outlives the study. The shape is
-`kafka-native-spike`'s, which answered a comparable question under a hard budget: a frozen
+that of an earlier spike, which answered a comparable question under a hard budget: a frozen
 pre-registration, one research document that is amended rather than rewritten, one file per backlog
 item, and raw logs that are the deliverable rather than an appendix.
 
@@ -425,7 +425,7 @@ something no tree here holds, and the checker reports those in their own section
 | The macro subject's stand | `xyk/bench/run.sh`, `xyk/bench/columns.sh` — the two-host protocol and its refusal to take a same-host number |
 | The prior phase | `zavarnik/docs/research/research-engines.md` — the macro unit, its bias, and the pinning defect |
 | The prior phase | `zavarnik/docs/research/research-optimizer.md` — the ceiling measurement this study must not quote |
-| The attribution tool | `razves/README.md` — bytes and samples per package and klib; the `:sampler` module |
+| The attribution tool | `youndie/razves@72a6fde!/README.md` — bytes and samples per package and klib; the `:sampler` module |
 | Compiler pins | `io.github.youndie.sborka:catalog:0.4.0.86!/catalog-0.4.0.86.toml` — Kotlin 2.4.20, Ktor 3.5.2, coroutines 1.11.0 |
 | LLVM pins | `kotlin-native-prebuilt-macos-aarch64-2.4.20!/konan/konan.properties` — `llvmVersion.linux_x64=21`, `llvm-21-x86_64-linux-dev-116` |
 | The fork | `JetBrains/kotlin@v2.4.20!/kotlin-native/backend.native/compiler/ir/backend.native/src/org/jetbrains/kotlin/backend/konan/llvm` — the pipeline Route A has to extend, named as the place to start reading and **not yet verified** to be the right directory |
